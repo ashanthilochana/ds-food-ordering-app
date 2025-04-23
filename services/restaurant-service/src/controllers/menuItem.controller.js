@@ -5,29 +5,39 @@ const { validationResult } = require('express-validator');
 // Create a new menu item
 exports.createMenuItem = async (req, res) => {
   try {
+    // Validate request body
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    // Check if restaurant exists and user is owner
+    // Check if restaurant exists
     const restaurant = await Restaurant.findById(req.body.restaurant);
     if (!restaurant) {
       return res.status(404).json({ message: 'Restaurant not found' });
     }
 
-    if (restaurant.owner.toString() !== req.user.id) {
-      return res.status(403).json({ message: 'Not authorized' });
+    // Check if user is the restaurant owner
+    if (restaurant.owner.toString() !== req.user._id) {
+      console.log('Restaurant owner:', restaurant.owner.toString());
+      console.log('User ID:', req.user._id);
+      return res.status(403).json({ message: 'Not authorized - you are not the owner of this restaurant' });
     }
 
-    const menuItem = new MenuItem(req.body);
-    await menuItem.save();
-    res.status(201).json(menuItem);
+    // Create and save the menu item
+    const menuItem = new MenuItem({
+      ...req.body,
+      restaurant: restaurant._id
+    });
+
+    const savedMenuItem = await menuItem.save();
+    res.status(201).json(savedMenuItem);
   } catch (error) {
+    console.error('Error creating menu item:', error);
     if (error.name === 'ValidationError') {
       return res.status(400).json({ message: error.message });
     }
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: 'Error creating menu item' });
   }
 };
 

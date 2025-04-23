@@ -117,7 +117,7 @@ exports.getOrderById = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to view this order' });
     }
 
-    if (req.user.role === 'restaurant_admin' && order.restaurant._id.toString() !== req.body.restaurantId) {
+    if (req.user.role === 'restaurant_admin' && order.restaurant._id.toString() !== req.user.restaurantId) {
       return res.status(403).json({ message: 'Not authorized to view this order' });
     }
 
@@ -141,7 +141,7 @@ exports.updateOrderStatus = async (req, res) => {
     }
 
     // Check authorization
-    if (req.user.role === 'restaurant_admin' && order.restaurant._id.toString() !== req.body.restaurantId) {
+    if (req.user.role === 'restaurant_admin' && order.restaurant._id.toString() !== req.user.restaurantId) {
       return res.status(403).json({ message: 'Not authorized to update this order' });
     }
 
@@ -210,7 +210,7 @@ exports.cancelOrder = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to cancel this order' });
     }
 
-    if (req.user.role === 'restaurant_admin' && order.restaurant._id.toString() !== req.body.restaurantId) {
+    if (req.user.role === 'restaurant_admin' && order.restaurant._id.toString() !== req.user.restaurantId) {
       return res.status(403).json({ message: 'Not authorized to cancel this order' });
     }
 

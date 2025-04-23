@@ -74,6 +74,24 @@ router.post('/login', [
 
 /**
  * @swagger
+ * /api/auth/users/{id}:
+ *   get:
+ *     summary: Get user details by ID
+ *     tags: [Auth]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: User details retrieved successfully
+ */
+router.get('/users/:id', auth, authController.getUserById);
+
+/**
+ * @swagger
  * /api/auth/profile:
  *   get:
  *     summary: Get user profile
