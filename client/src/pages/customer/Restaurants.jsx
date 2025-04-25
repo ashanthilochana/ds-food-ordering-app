@@ -11,11 +11,20 @@ import {
   TextField, 
   InputAdornment, 
   CircularProgress,
-  Container
+  Container,
+  Paper,
+  Button,
+  Divider
 } from '@mui/material';
-import { Search as SearchIcon, Restaurant as RestaurantIcon } from '@mui/icons-material';
-import { Link } from 'react-router-dom';
+import { 
+  Search as SearchIcon, 
+  Restaurant as RestaurantIcon,
+  ShoppingCart as CartIcon,
+  History as HistoryIcon
+} from '@mui/icons-material';
+import { Link, useNavigate } from 'react-router-dom';
 import Layout from '../../components/layout/Layout';
+import authService from '../../services/auth.service';
 
 // Placeholder data - will be replaced with API call
 const mockRestaurants = [
@@ -82,31 +91,47 @@ const mockRestaurants = [
 ];
 
 const Restaurants = () => {
+  const navigate = useNavigate();
   const [restaurants, setRestaurants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [cuisineFilter, setCuisineFilter] = useState('');
+  const [user, setUser] = useState(null);
+  const [recentOrders, setRecentOrders] = useState([
+    {
+      id: '12345',
+      restaurant: 'Pizza Palace',
+      items: ['2x Margherita Pizza', '1x Garlic Bread'],
+      total: 42.98,
+      status: 'delivered',
+      date: '2024-02-20'
+    }
+  ]);
+  const [cartItems, setCartItems] = useState([
+    {
+      id: 1,
+      name: 'Margherita Pizza',
+      quantity: 2,
+      price: 15.99
+    }
+  ]);
 
   useEffect(() => {
-    // Simulate API call
+    // Check if user is logged in
+    const currentUser = authService.getCurrentUser();
+    setUser(currentUser);
+
+    // Load restaurants
     setTimeout(() => {
       setRestaurants(mockRestaurants);
       setLoading(false);
     }, 1000);
-    
-    // Actual API call would be something like:
-    // const fetchRestaurants = async () => {
-    //   try {
-    //     const response = await axios.get('/api/restaurants');
-    //     setRestaurants(response.data);
-    //     setLoading(false);
-    //   } catch (error) {
-    //     console.error('Error fetching restaurants:', error);
-    //     setLoading(false);
-    //   }
-    // };
-    // fetchRestaurants();
+
+    // In production, you would fetch recent orders and cart items here
   }, []);
+
+  const getTotalCartAmount = () => {
+    return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+  };
 
   const handleSearchChange = (event) => {
     setSearchTerm(event.target.value);
@@ -123,6 +148,85 @@ const Restaurants = () => {
   return (
     <Layout>
       <Container>
+        {user && (
+          <Grid container spacing={3} sx={{ mb: 4 }}>
+            {/* Recent Order Summary */}
+            <Grid item xs={12} md={6}>
+              <Paper sx={{ p: 2, height: '100%' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Typography variant="h6">
+                    Recent Order
+                  </Typography>
+                  <Button
+                    startIcon={<HistoryIcon />}
+                    onClick={() => navigate('/dashboard')}
+                  >
+                    View All Orders
+                  </Button>
+                </Box>
+                {recentOrders.length > 0 ? (
+                  <Box>
+                    <Typography variant="subtitle1">{recentOrders[0].restaurant}</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {recentOrders[0].items.join(', ')}
+                    </Typography>
+                    <Typography variant="body2" sx={{ mt: 1 }}>
+                      Total: ${recentOrders[0].total.toFixed(2)}
+                    </Typography>
+                    <Button 
+                      size="small" 
+                      sx={{ mt: 1 }}
+                      onClick={() => navigate(`/track-order/${recentOrders[0].id}`)}
+                    >
+                      Track Order
+                    </Button>
+                  </Box>
+                ) : (
+                  <Typography variant="body2" color="text.secondary">
+                    No recent orders
+                  </Typography>
+                )}
+              </Paper>
+            </Grid>
+
+            {/* Cart Summary */}
+            <Grid item xs={12} md={6}>
+              <Paper sx={{ p: 2, height: '100%' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Typography variant="h6">
+                    Your Cart
+                  </Typography>
+                  <Button
+                    startIcon={<CartIcon />}
+                    onClick={() => navigate('/cart')}
+                  >
+                    View Cart
+                  </Button>
+                </Box>
+                {cartItems.length > 0 ? (
+                  <Box>
+                    {cartItems.map((item) => (
+                      <Box key={item.id} sx={{ mb: 1 }}>
+                        <Typography variant="body2">
+                          {item.quantity}x {item.name}
+                        </Typography>
+                      </Box>
+                    ))}
+                    <Divider sx={{ my: 1 }} />
+                    <Typography variant="subtitle1">
+                      Total: ${getTotalCartAmount().toFixed(2)}
+                    </Typography>
+                  </Box>
+                ) : (
+                  <Typography variant="body2" color="text.secondary">
+                    Your cart is empty
+                  </Typography>
+                )}
+              </Paper>
+            </Grid>
+          </Grid>
+        )}
+
         <Box sx={{ mb: 4 }}>
           <Typography variant="h4" component="h1" gutterBottom>
             Restaurants

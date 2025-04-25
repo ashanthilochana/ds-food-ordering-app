@@ -217,9 +217,14 @@ const Navbar = ({ cartItems = [], userRole }) => {
               </Menu>
             </>
           ) : (
-            <Button color="inherit" component={Link} to="/login">
-              Login
-            </Button>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <Button color="inherit" component={Link} to="/signup">
+                Sign Up
+              </Button>
+              <Button color="inherit" component={Link} to="/login">
+                Login
+              </Button>
+            </Box>
           )}
         </Toolbar>
       </AppBar>
