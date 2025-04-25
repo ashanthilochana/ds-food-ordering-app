@@ -1,6 +1,7 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Login from './pages/Login';
+import SignUp from './pages/SignUp';
 import Dashboard from './pages/Dashboard';
 
 // Customer routes
@@ -22,6 +23,7 @@ function App() {
       {/* Auth Routes */}
       <Route path="/" element={<Restaurants />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<SignUp />} />
       
       {/* Customer Routes */}
       <Route path="/restaurants" element={<Restaurants />} />

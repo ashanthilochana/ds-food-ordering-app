@@ -1,41 +1,75 @@
 import axios from '../utils/axios';
 
-const API_URL = '/api/auth';  // Use relative URL to work with Vite proxy
+const API_URL = "http://localhost:5000/api/auth/";
+
+const register = async (email, password, name, role = "customer") => {
+  try {
+    const response = await fetch(`${API_URL}register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email,
+        password,
+        name,
+        role
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Registration failed');
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    throw error;
+  }
+};
 
 const login = async (email, password) => {
   try {
-    console.log('Attempting login with:', { email });
-    const response = await axios.post(`${API_URL}/login`, {
-      email,
-      password,
+    const response = await fetch(`${API_URL}login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email,
+        password,
+      }),
     });
-    
-    console.log('Login response:', response.data);
-    
-    if (response.data.token) {
-      localStorage.setItem('user', JSON.stringify(response.data));
-      console.log('User data saved to localStorage');
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Login failed');
     }
-    
-    return response.data;
+
+    const data = await response.json();
+    if (data.token) {
+      localStorage.setItem("user", JSON.stringify(data));
+    }
+    return data;
   } catch (error) {
-    console.error('Login error:', error.response || error);
-    throw error.response?.data?.message || 'An error occurred during login';
+    throw error;
   }
 };
 
 const logout = () => {
-  localStorage.removeItem('user');
+  localStorage.removeItem("user");
 };
 
 const getCurrentUser = () => {
-  const userStr = localStorage.getItem('user');
-  if (userStr) return JSON.parse(userStr);
-  return null;
+  return JSON.parse(localStorage.getItem("user"));
 };
 
-export default {
+const authService = {
+  register,
   login,
   logout,
   getCurrentUser,
 };
+
+export default authService;

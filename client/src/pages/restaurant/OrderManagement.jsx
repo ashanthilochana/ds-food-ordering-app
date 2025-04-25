@@ -31,7 +31,7 @@ import {
   Close as CloseIcon,
   Refresh as RefreshIcon,
   RestaurantMenu as RestaurantIcon,
-  Motorcycle as DeliveryIcon,
+  TwoWheeler as DeliveryIcon,
   Receipt as ReceiptIcon,
   AccessTime as TimeIcon,
   Person as PersonIcon,

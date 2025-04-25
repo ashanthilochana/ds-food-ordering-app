@@ -30,7 +30,7 @@ import {
 import {
   CheckCircle as CheckCircleIcon,
   RestaurantMenu as RestaurantIcon,
-  Delivery as DeliveryIcon,
+  LocalShipping as DeliveryIcon,
   DirectionsBike as BikeIcon,
   Home as HomeIcon,
   AccessTime as TimeIcon,
