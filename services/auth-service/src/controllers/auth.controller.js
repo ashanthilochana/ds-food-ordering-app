@@ -3,15 +3,18 @@ const { validationResult } = require('express-validator');
 const User = require('../models/user.model');
 
 // Generate tokens
-const generateTokens = (userId) => {
+const generateTokens = async (userId) => {
+  const user = await User.findById(userId);
+  if (!user) throw new Error('User not found');
+
   const accessToken = jwt.sign(
-    { id: userId },
+    { id: userId, role: user.role },
     process.env.JWT_SECRET,
     { expiresIn: '1h' }
   );
   
   const refreshToken = jwt.sign(
-    { id: userId },
+    { id: userId, role: user.role },
     process.env.JWT_REFRESH_SECRET,
     { expiresIn: '7d' }
   );
@@ -46,7 +49,7 @@ exports.register = async (req, res) => {
     await user.save();
 
     // Generate tokens
-    const { accessToken, refreshToken } = generateTokens(user._id);
+    const { accessToken, refreshToken } = await generateTokens(user._id);
     
     // Save refresh token
     user.refreshToken = refreshToken;
@@ -85,7 +88,7 @@ exports.login = async (req, res) => {
     }
 
     // Generate tokens
-    const { accessToken, refreshToken } = generateTokens(user._id);
+    const { accessToken, refreshToken } = await generateTokens(user._id);
     
     // Save refresh token
     user.refreshToken = refreshToken;
