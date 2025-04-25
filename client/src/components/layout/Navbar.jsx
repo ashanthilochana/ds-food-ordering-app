@@ -16,7 +16,8 @@ import {
   useTheme,
   Badge,
   Menu,
-  MenuItem
+  MenuItem,
+  Divider
 } from '@mui/material';
 import { 
   Menu as MenuIcon, 
@@ -25,7 +26,8 @@ import {
   Person as PersonIcon, 
   Logout as LogoutIcon, 
   Dashboard as DashboardIcon,
-  LocalShipping as DeliveryIcon
+  LocalShipping as DeliveryIcon,
+  AccountCircle as AccountIcon
 } from '@mui/icons-material';
 import { useNavigate, Link } from 'react-router-dom';
 import authService from '../../services/auth.service';
@@ -64,23 +66,33 @@ const Navbar = ({ cartItems = [], userRole }) => {
     handleClose();
   };
 
+  const handleProfile = () => {
+    navigate('/profile');
+    handleClose();
+  };
+
+  const handleDashboard = () => {
+    navigate('/dashboard');
+    handleClose();
+  };
+
   const getNavLinks = () => {
     switch(userRole) {
       case 'customer':
         return [
           { text: 'Restaurants', icon: <RestaurantIcon />, path: '/restaurants' },
-          { text: 'My Orders', icon: <DashboardIcon />, path: '/my-orders' },
+          { text: 'My Orders', icon: <DashboardIcon />, path: '/dashboard' },
         ];
-      case 'restaurant':
+      case 'restaurant_admin':
         return [
-          { text: 'Dashboard', icon: <DashboardIcon />, path: '/restaurant-dashboard' },
+          { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
           { text: 'Menu', icon: <RestaurantIcon />, path: '/menu-management' },
           { text: 'Orders', icon: <CartIcon />, path: '/restaurant-orders' },
         ];
-      case 'delivery':
+      case 'delivery_person':
         return [
-          { text: 'My Deliveries', icon: <DeliveryIcon />, path: '/my-deliveries' },
-          { text: 'Dashboard', icon: <DashboardIcon />, path: '/delivery-dashboard' },
+          { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
+          { text: 'My Deliveries', icon: <DeliveryIcon />, path: '/dashboard' },
         ];
       default:
         return [];
@@ -129,14 +141,14 @@ const Navbar = ({ cartItems = [], userRole }) => {
           </Typography>
 
           {!isMobile && (
-            <Box sx={{ display: 'flex' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               {navLinks.map((item, index) => (
-                <Button 
-                  key={index} 
-                  color="inherit" 
-                  component={Link} 
-                  to={item.path}
+                <Button
+                  key={index}
+                  color="inherit"
                   startIcon={item.icon}
+                  component={Link}
+                  to={item.path}
                 >
                   {item.text}
                 </Button>
@@ -157,53 +169,61 @@ const Navbar = ({ cartItems = [], userRole }) => {
           )}
 
           {user ? (
-            <Box>
+            <>
               <IconButton
+                size="large"
+                aria-label="account"
+                aria-controls="menu-appbar"
+                aria-haspopup="true"
                 onClick={handleProfileMenu}
                 color="inherit"
               >
-                <Avatar sx={{ width: 32, height: 32 }}>
-                  {user.name?.charAt(0) || user.email?.charAt(0)}
-                </Avatar>
+                <AccountIcon />
               </IconButton>
               <Menu
+                id="menu-appbar"
                 anchorEl={anchorEl}
+                anchorOrigin={{
+                  vertical: 'bottom',
+                  horizontal: 'right',
+                }}
+                keepMounted
+                transformOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
+                }}
                 open={Boolean(anchorEl)}
                 onClose={handleClose}
               >
-                <MenuItem component={Link} to="/profile" onClick={handleClose}>Profile</MenuItem>
-                <MenuItem onClick={handleLogout}>Logout</MenuItem>
+                <MenuItem onClick={handleProfile}>
+                  <ListItemIcon>
+                    <PersonIcon fontSize="small" />
+                  </ListItemIcon>
+                  Profile
+                </MenuItem>
+                <MenuItem onClick={handleDashboard}>
+                  <ListItemIcon>
+                    <DashboardIcon fontSize="small" />
+                  </ListItemIcon>
+                  Dashboard
+                </MenuItem>
+                <Divider />
+                <MenuItem onClick={handleLogout}>
+                  <ListItemIcon>
+                    <LogoutIcon fontSize="small" />
+                  </ListItemIcon>
+                  Logout
+                </MenuItem>
               </Menu>
-            </Box>
-          ) : (
-            <>
-              <Button 
-                color="inherit" 
-                component={Link} 
-                to="/login"
-                startIcon={<PersonIcon />}
-                sx={{ mr: 1 }}
-              >
-                Login
-              </Button>
-              <Button 
-                color="inherit" 
-                variant="outlined"
-                component={Link} 
-                to="/signup"
-                sx={{ 
-                  border: '1px solid white',
-                  '&:hover': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.08)'
-                  }
-                }}
-              >
-                Sign Up
-              </Button>
             </>
+          ) : (
+            <Button color="inherit" component={Link} to="/login">
+              Login
+            </Button>
           )}
         </Toolbar>
       </AppBar>
+
       <Drawer
         anchor="left"
         open={drawerOpen}
