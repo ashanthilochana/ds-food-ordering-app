@@ -83,9 +83,7 @@ const Navbar = ({ cartItems = [], userRole }) => {
           { text: 'Dashboard', icon: <DashboardIcon />, path: '/delivery-dashboard' },
         ];
       default:
-        return [
-          { text: 'Login', icon: <PersonIcon />, path: '/login' },
-        ];
+        return [];
     }
   };
 
@@ -178,14 +176,31 @@ const Navbar = ({ cartItems = [], userRole }) => {
               </Menu>
             </Box>
           ) : (
-            <Button 
-              color="inherit" 
-              component={Link} 
-              to="/login"
-              startIcon={<PersonIcon />}
-            >
-              Login
-            </Button>
+            <>
+              <Button 
+                color="inherit" 
+                component={Link} 
+                to="/login"
+                startIcon={<PersonIcon />}
+                sx={{ mr: 1 }}
+              >
+                Login
+              </Button>
+              <Button 
+                color="inherit" 
+                variant="outlined"
+                component={Link} 
+                to="/signup"
+                sx={{ 
+                  border: '1px solid white',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.08)'
+                  }
+                }}
+              >
+                Sign Up
+              </Button>
+            </>
           )}
         </Toolbar>
       </AppBar>
