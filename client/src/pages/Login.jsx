@@ -32,21 +32,23 @@ export default function Login() {
     try {
       console.log('Submitting login form with:', { email });
       const response = await authService.login(email, password);
-      console.log('Login successful:', response);
+      console.log('Login successful - full response:', response);
+      console.log('Response structure:', JSON.stringify(response, null, 2));
       
       // Store user data
       localStorage.setItem('user', JSON.stringify(response));
       
       // Navigate to appropriate dashboard based on role
-      const role = response.user.role;
+      const role = response.role;
+      console.log('User role:', role);
       const dashboardRoutes = {
-        customer: '/customer-dashboard',
+        customer: '/restaurants',
         restaurant_admin: '/restaurant-dashboard',
         delivery_person: '/delivery-dashboard',
-        admin: '/admin-dashboard'
+        admin: '/restaurants'
       };
       
-      navigate(dashboardRoutes[role] || '/dashboard');
+      navigate(dashboardRoutes[role] || '/restaurants');
     } catch (err) {
       console.error('Login error:', err);
       setError(err.message || 'Failed to login. Please check your credentials.');

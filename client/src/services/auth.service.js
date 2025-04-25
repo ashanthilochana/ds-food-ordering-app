@@ -1,6 +1,6 @@
 import axios from '../utils/axios';
 
-const API_URL = "http://localhost:5000/api/auth/";
+const API_URL = "http://localhost:3000/api/auth/";
 
 const register = async (email, password, name, role = "customer") => {
   try {
@@ -31,6 +31,7 @@ const register = async (email, password, name, role = "customer") => {
 
 const login = async (email, password) => {
   try {
+    console.log(`Attempting to login at: ${API_URL}login`);
     const response = await fetch(`${API_URL}login`, {
       method: 'POST',
       headers: {
@@ -42,17 +43,21 @@ const login = async (email, password) => {
       }),
     });
 
+    console.log('Response status:', response.status);
+    
+    const data = await response.json();
+    console.log('Response data:', data);
+    
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Login failed');
+      throw new Error(data.message || 'Login failed');
     }
 
-    const data = await response.json();
     if (data.token) {
       localStorage.setItem("user", JSON.stringify(data));
     }
     return data;
   } catch (error) {
+    console.error('Auth service login error:', error);
     throw error;
   }
 };
