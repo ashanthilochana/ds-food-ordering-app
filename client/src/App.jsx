@@ -11,6 +11,7 @@ import Cart from './pages/customer/Cart';
 import TrackOrder from './pages/customer/TrackOrder';
 
 // Restaurant admin routes
+import RestaurantDashboard from './pages/restaurant/RestaurantDashboard';
 import MenuManagement from './pages/restaurant/MenuManagement';
 import OrderManagement from './pages/restaurant/OrderManagement';
 
@@ -33,12 +34,12 @@ function App() {
       <Route path="/my-orders" element={<Dashboard />} />
       
       {/* Restaurant Admin Routes */}
-      <Route path="/restaurant-dashboard" element={<Dashboard />} />
+      <Route path="/restaurant-dashboard" element={<RestaurantDashboard />} />
       <Route path="/menu-management" element={<MenuManagement />} />
       <Route path="/restaurant-orders" element={<OrderManagement />} />
 
       {/* Delivery Personnel Routes */}
-      <Route path="/delivery-dashboard" element={<Dashboard />} />
+      <Route path="/delivery-dashboard" element={<DeliveryDashboard />} />
       <Route path="/my-deliveries" element={<DeliveryDashboard />} />
     </Routes>
   );
