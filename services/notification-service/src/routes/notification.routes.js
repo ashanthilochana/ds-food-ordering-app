@@ -34,6 +34,28 @@ router.get('/', authenticate, notificationController.getUserNotifications);
 
 /**
  * @swagger
+ * /api/notifications:
+ *   post:
+ *     summary: Create a new notification
+ *     tags: [Notifications]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userId
+ *               - type
+ *               - title
+ *               - message
+ */
+router.post('/', authenticate, notificationController.createNotificationEndpoint);
+
+/**
+ * @swagger
  * /api/notifications/{id}/read:
  *   patch:
  *     summary: Mark notification as read
