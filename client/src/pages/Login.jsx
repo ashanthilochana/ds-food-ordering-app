@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import {
   Avatar,
   Button,
@@ -32,21 +32,23 @@ export default function Login() {
     try {
       console.log('Submitting login form with:', { email });
       const response = await authService.login(email, password);
-      console.log('Login successful:', response);
+      console.log('Login successful - full response:', response);
+      console.log('Response structure:', JSON.stringify(response, null, 2));
       
       // Store user data
       localStorage.setItem('user', JSON.stringify(response));
       
       // Navigate to appropriate dashboard based on role
-      const role = response.user.role;
+      const role = response.role;
+      console.log('User role:', role);
       const dashboardRoutes = {
-        customer: '/customer-dashboard',
+        customer: '/restaurants',
         restaurant_admin: '/restaurant-dashboard',
         delivery_person: '/delivery-dashboard',
-        admin: '/admin-dashboard'
+        admin: '/restaurants'
       };
       
-      navigate(dashboardRoutes[role] || '/dashboard');
+      navigate(dashboardRoutes[role] || '/restaurants');
     } catch (err) {
       console.error('Login error:', err);
       setError(err.message || 'Failed to login. Please check your credentials.');
@@ -130,12 +132,12 @@ export default function Login() {
             </Button>
             <Grid container>
               <Grid item xs>
-                <Link href="#" variant="body2">
+                <Link component={RouterLink} to="/forgot-password" variant="body2">
                   Forgot password?
                 </Link>
               </Grid>
               <Grid item>
-                <Link href="/register" variant="body2">
+                <Link component={RouterLink} to="/signup" variant="body2">
                   {"Don't have an account? Sign Up"}
                 </Link>
               </Grid>

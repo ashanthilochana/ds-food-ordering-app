@@ -14,10 +14,16 @@
     "docker:build": "docker build -t auth-service .",
     "docker:run": "docker run -p 3002:3002 auth-service"
   },
-  "keywords": ["auth", "microservice", "jwt", "authentication"],
+  "keywords": [
+    "auth",
+    "microservice",
+    "jwt",
+    "authentication"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "auth-service": "file:",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
