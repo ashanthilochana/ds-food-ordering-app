@@ -23,7 +23,8 @@ import {
   IconButton,
   TextField,
   Snackbar,
-  Alert
+  Alert,
+  Paper
 } from '@mui/material';
 import {
   AccessTime as TimeIcon,
@@ -31,163 +32,29 @@ import {
   Close as CloseIcon,
   Add as AddIcon,
   Remove as RemoveIcon,
-  ShoppingCart as CartIcon
+  ShoppingCart as CartIcon,
+  LocationOn as LocationIcon,
+  Phone as PhoneIcon,
+  Email as EmailIcon,
+  Schedule as ScheduleIcon,
+  Restaurant as RestaurantIcon,
+  Info as InfoIcon,
+  AttachMoney as AttachMoneyIcon
 } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '../../components/layout/Layout';
 import Cookies from 'js-cookie';
+import restaurantService from '../../services/restaurant.service';
 
 const CART_COOKIE_NAME = 'cartItems';
 const CART_EXPIRY_DAYS = 7;
-
-// Mock data - replace with API call
-const mockRestaurant = {
-  id: 1,
-  name: 'Pizza Palace',
-  image: 'https://source.unsplash.com/random/1200x400/?pizza-restaurant',
-  cuisine: 'Italian',
-  rating: 4.5,
-  totalReviews: 248,
-  deliveryTime: '30-45 min',
-  deliveryFee: '$2.99',
-  minOrder: '$10',
-  address: '123 Main Street, Cityville',
-  description: 'Authentic Italian pizza made with fresh ingredients and traditional recipes.',
-  tags: ['Pizza', 'Pasta', 'Italian'],
-  openingHours: '10:00 AM - 10:00 PM',
-  menuCategories: [
-    {
-      id: 1,
-      name: 'Pizza',
-      items: [
-        {
-          id: 101,
-          name: 'Margherita Pizza',
-          description: 'Classic pizza with tomato sauce, mozzarella, and basil',
-          price: 12.99,
-          image: 'https://source.unsplash.com/random/300x200/?margherita-pizza',
-          popular: true,
-          options: [
-            { name: 'Size', choices: ['Small (+$0)', 'Medium (+$2)', 'Large (+$4)'] },
-            { name: 'Crust', choices: ['Thin', 'Thick', 'Stuffed (+$3)'] }
-          ]
-        },
-        {
-          id: 102,
-          name: 'Pepperoni Pizza',
-          description: 'Pizza with tomato sauce, mozzarella and pepperoni',
-          price: 14.99,
-          image: 'https://source.unsplash.com/random/300x200/?pepperoni-pizza',
-          popular: true,
-          options: [
-            { name: 'Size', choices: ['Small (+$0)', 'Medium (+$2)', 'Large (+$4)'] },
-            { name: 'Crust', choices: ['Thin', 'Thick', 'Stuffed (+$3)'] }
-          ]
-        },
-        {
-          id: 103,
-          name: 'Vegetarian Pizza',
-          description: 'Fresh vegetables, tomato sauce, and mozzarella',
-          price: 13.99,
-          image: 'https://source.unsplash.com/random/300x200/?vegetarian-pizza',
-          options: [
-            { name: 'Size', choices: ['Small (+$0)', 'Medium (+$2)', 'Large (+$4)'] },
-            { name: 'Crust', choices: ['Thin', 'Thick', 'Stuffed (+$3)'] }
-          ]
-        }
-      ]
-    },
-    {
-      id: 2,
-      name: 'Pasta',
-      items: [
-        {
-          id: 201,
-          name: 'Spaghetti Bolognese',
-          description: 'Spaghetti with rich meat sauce and parmesan',
-          price: 10.99,
-          image: 'https://source.unsplash.com/random/300x200/?spaghetti',
-          popular: true,
-          options: [
-            { name: 'Size', choices: ['Regular', 'Large (+$3)'] },
-            { name: 'Add-ons', choices: ['Extra Cheese (+$1)', 'Extra Sauce (+$0.5)'] }
-          ]
-        },
-        {
-          id: 202,
-          name: 'Fettuccine Alfredo',
-          description: 'Fettuccine pasta with creamy Alfredo sauce',
-          price: 11.99,
-          image: 'https://source.unsplash.com/random/300x200/?fettuccine-alfredo',
-          options: [
-            { name: 'Size', choices: ['Regular', 'Large (+$3)'] },
-            { name: 'Add-ons', choices: ['Chicken (+$2.5)', 'Broccoli (+$1)', 'Extra Cheese (+$1)'] }
-          ]
-        }
-      ]
-    },
-    {
-      id: 3,
-      name: 'Sides',
-      items: [
-        {
-          id: 301,
-          name: 'Garlic Bread',
-          description: 'Toasted bread with garlic butter and herbs',
-          price: 4.99,
-          image: 'https://source.unsplash.com/random/300x200/?garlic-bread',
-          options: [
-            { name: 'Add-ons', choices: ['Cheese (+$1)'] }
-          ]
-        },
-        {
-          id: 302,
-          name: 'Caesar Salad',
-          description: 'Fresh romaine lettuce, croutons, parmesan and Caesar dressing',
-          price: 6.99,
-          image: 'https://source.unsplash.com/random/300x200/?caesar-salad',
-          options: [
-            { name: 'Size', choices: ['Small', 'Regular (+$2)'] },
-            { name: 'Add-ons', choices: ['Chicken (+$2.5)', 'Extra Dressing (+$0.5)'] }
-          ]
-        }
-      ]
-    },
-    {
-      id: 4,
-      name: 'Drinks',
-      items: [
-        {
-          id: 401,
-          name: 'Soda',
-          description: 'Cola, Sprite, or Fanta',
-          price: 1.99,
-          image: 'https://source.unsplash.com/random/300x200/?soda',
-          options: [
-            { name: 'Size', choices: ['Small', 'Medium (+$0.5)', 'Large (+$1)'] },
-            { name: 'Type', choices: ['Cola', 'Sprite', 'Fanta'] }
-          ]
-        },
-        {
-          id: 402,
-          name: 'Bottled Water',
-          description: 'Still or sparkling water',
-          price: 1.49,
-          image: 'https://source.unsplash.com/random/300x200/?water-bottle',
-          options: [
-            { name: 'Type', choices: ['Still', 'Sparkling (+$0.5)'] }
-          ]
-        }
-      ]
-    }
-  ]
-};
 
 const RestaurantDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [restaurant, setRestaurant] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState(0);
   const [selectedItem, setSelectedItem] = useState(null);
   const [itemCount, setItemCount] = useState(1);
@@ -196,25 +63,22 @@ const RestaurantDetail = () => {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
 
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setRestaurant(mockRestaurant);
-      setLoading(false);
-    }, 1000);
-    
-    // Actual API call would be:
-    // const fetchRestaurant = async () => {
-    //   try {
-    //     const response = await axios.get(`/api/restaurants/${id}`);
-    //     setRestaurant(response.data);
-    //     setLoading(false);
-    //   } catch (error) {
-    //     console.error('Error fetching restaurant:', error);
-    //     setLoading(false);
-    //   }
-    // };
-    // fetchRestaurant();
+    fetchRestaurant();
   }, [id]);
+
+  const fetchRestaurant = async () => {
+    try {
+      setLoading(true);
+      const data = await restaurantService.getRestaurantById(id);
+      setRestaurant(data);
+      setError(null);
+    } catch (err) {
+      setError('Failed to fetch restaurant details. Please try again later.');
+      console.error('Error fetching restaurant:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
@@ -301,7 +165,7 @@ const RestaurantDetail = () => {
     });
     
     // Save restaurant ID to cookie
-    Cookies.set('restaurantId', restaurant.id, {
+    Cookies.set('restaurantId', restaurant._id, {
       expires: CART_EXPIRY_DAYS,
       path: '/'
     });
@@ -317,6 +181,17 @@ const RestaurantDetail = () => {
     return cartItems.reduce((total, item) => total + item.total, 0).toFixed(2);
   };
 
+  const formatOpeningHours = (hours) => {
+    if (!hours) return 'Hours not available';
+    
+    const days = Object.entries(hours).map(([day, time]) => {
+      const formattedDay = day.charAt(0).toUpperCase() + day.slice(1);
+      return `${formattedDay}: ${time.open} - ${time.close}`;
+    });
+    
+    return days.join('\n');
+  };
+
   if (loading) {
     return (
       <Layout>
@@ -327,151 +202,341 @@ const RestaurantDetail = () => {
     );
   }
 
+  if (error) {
+    return (
+      <Layout>
+        <Container>
+          <Paper sx={{ p: 3, mt: 3 }}>
+            <Typography color="error">{error}</Typography>
+            <Button variant="contained" onClick={fetchRestaurant} sx={{ mt: 2 }}>
+              Retry
+            </Button>
+          </Paper>
+        </Container>
+      </Layout>
+    );
+  }
+
+  if (!restaurant) {
+    return (
+      <Layout>
+        <Container>
+          <Paper sx={{ p: 3, mt: 3 }}>
+            <Typography>Restaurant not found</Typography>
+            <Button variant="contained" onClick={() => navigate('/restaurants')} sx={{ mt: 2 }}>
+              Back to Restaurants
+            </Button>
+          </Paper>
+        </Container>
+      </Layout>
+    );
+  }
+
   return (
     <Layout cartItems={cartItems}>
       <Box>
         {/* Restaurant Header with Image */}
-        <Box sx={{ position: 'relative', width: '100%', height: { xs: '150px', md: '250px' }, overflow: 'hidden' }}>
+        <Box sx={{ position: 'relative', width: '100%', height: { xs: '200px', md: '400px' }, overflow: 'hidden' }}>
           <Box
             component="img"
-            src={restaurant.image}
+            src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
             alt={restaurant.name}
             sx={{
               width: '100%',
               height: '100%',
               objectFit: 'cover',
+              filter: 'brightness(0.8)'
             }}
           />
+          <Box
+            sx={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              background: 'linear-gradient(rgba(0,0,0,0), rgba(0,0,0,0.7))',
+              p: 3,
+              color: 'white'
+            }}
+          >
+            <Typography variant="h3" component="h1" sx={{ fontWeight: 'bold', mb: 1 }}>
+              {restaurant.name}
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <Rating value={restaurant.rating} precision={0.5} readOnly size="small" sx={{ color: 'white' }} />
+                <Typography variant="body2" sx={{ ml: 1 }}>
+                  {restaurant.rating} ({restaurant.totalReviews || 0} reviews)
+                </Typography>
+              </Box>
+              <Typography variant="body2">•</Typography>
+              <Typography variant="body2">{restaurant.cuisine.join(', ')}</Typography>
+              <Typography variant="body2">•</Typography>
+              <Typography variant="body2" sx={{ textTransform: 'capitalize' }}>
+                {restaurant.priceRange}
+              </Typography>
+            </Box>
+          </Box>
         </Box>
 
         <Container>
-          {/* Restaurant Info */}
-          <Card sx={{ mt: -4, position: 'relative', zIndex: 1, mb: 3 }}>
-            <CardContent>
-              <Grid container spacing={2}>
-                <Grid item xs={12} md={8}>
-                  <Typography variant="h4" component="h1" gutterBottom>
-                    {restaurant.name}
-                  </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, flexWrap: 'wrap' }}>
-                    <Rating value={restaurant.rating} precision={0.5} readOnly size="small" />
-                    <Typography variant="body2" sx={{ ml: 1 }}>
-                      {restaurant.rating} ({restaurant.totalReviews} reviews)
-                    </Typography>
-                    <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
-                    <Typography variant="body2">{restaurant.cuisine}</Typography>
-                  </Box>
-                  <Typography variant="body2" color="text.secondary" paragraph>
-                    {restaurant.description}
-                  </Typography>
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                    {restaurant.tags.map((tag, index) => (
-                      <Chip key={index} label={tag} size="small" />
-                    ))}
-                  </Box>
-                </Grid>
-                <Grid item xs={12} md={4}>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <TimeIcon fontSize="small" sx={{ mr: 1 }} />
-                      <Typography variant="body2">
-                        {restaurant.deliveryTime} delivery time
+          {/* Restaurant Info Cards */}
+          <Grid container spacing={3} sx={{ mt: -4, position: 'relative', zIndex: 1 }}>
+            {/* Menu Section */}
+            <Grid item xs={12} md={8}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Typography variant="h4" gutterBottom sx={{ mt: 4 }}>
+                  Menu
+                </Typography>
+                <Tabs
+                  value={activeTab}
+                  onChange={handleTabChange}
+                  variant="scrollable"
+                  scrollButtons="auto"
+                  sx={{ 
+                    mb: 3,
+                    '& .MuiTab-root': {
+                      fontSize: '1.1rem',
+                      fontWeight: 500,
+                      textTransform: 'none',
+                      minWidth: 120
+                    }
+                  }}
+                >
+                  {restaurant.menuCategories?.map((category, index) => (
+                    <Tab label={category.name} key={index} />
+                  ))}
+                </Tabs>
+
+                {/* Menu Items */}
+                <Box sx={{ mb: 4 }}>
+                  {restaurant.menuCategories?.map((category, index) => (
+                    <Box
+                      key={category.id}
+                      role="tabpanel"
+                      hidden={activeTab !== index}
+                      id={`tabpanel-${index}`}
+                    >
+                      {activeTab === index && (
+                        <List>
+                          {category.items.map((item) => (
+                            <React.Fragment key={item.id}>
+                              <ListItem 
+                                onClick={() => openItemDialog(item)}
+                                sx={{ 
+                                  cursor: 'pointer',
+                                  '&:hover': {
+                                    backgroundColor: 'action.hover'
+                                  }
+                                }}
+                              >
+                                <Box sx={{ display: 'flex', width: '100%', gap: 2 }}>
+                                  {/* Item Image */}
+                                  <Box sx={{ width: 100, height: 100, flexShrink: 0 }}>
+                                    <CardMedia
+                                      component="img"
+                                      height="100"
+                                      image={item.image || 'https://source.unsplash.com/random/100x100/?food'}
+                                      alt={item.name}
+                                      sx={{ borderRadius: 1 }}
+                                    />
+                                  </Box>
+                                  
+                                  {/* Item Details */}
+                                  <Box sx={{ flexGrow: 1 }}>
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                      <Typography variant="h6" component="h3">
+                                        {item.name}
+                                        {item.popular && (
+                                          <Chip 
+                                            label="Popular" 
+                                            size="small" 
+                                            color="primary" 
+                                            sx={{ ml: 1, height: 20, fontSize: '0.7rem' }} 
+                                          />
+                                        )}
+                                      </Typography>
+                                      <Typography variant="h6" color="primary" fontWeight="bold">
+                                        ${item.price.toFixed(2)}
+                                      </Typography>
+                                    </Box>
+                                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                                      {item.description}
+                                    </Typography>
+                                    {item.preparationTime && (
+                                      <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                                        <TimeIcon color="action" sx={{ fontSize: '1rem', mr: 0.5 }} />
+                                        <Typography variant="body2" color="text.secondary">
+                                          {item.preparationTime} mins
+                                        </Typography>
+                                      </Box>
+                                    )}
+                                  </Box>
+                                </Box>
+                              </ListItem>
+                              <Divider />
+                            </React.Fragment>
+                          ))}
+                        </List>
+                      )}
+                    </Box>
+                  ))}
+                </Box>
+              </Box>
+            </Grid>
+
+            {/* Details Section */}
+            <Grid item xs={12} md={4}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                {/* About Card */}
+                <Card>
+                  <CardContent>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                      <RestaurantIcon color="primary" sx={{ mr: 1 }} />
+                      <Typography variant="h6">
+                        About Us
                       </Typography>
                     </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <DeliveryIcon fontSize="small" sx={{ mr: 1 }} />
-                      <Typography variant="body2">
-                        {restaurant.deliveryFee} delivery fee
+                    <Box sx={{ pl: 4 }}>
+                      <Typography variant="body1" color="text.secondary" paragraph>
+                        {restaurant.description}
+                      </Typography>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                        {restaurant.cuisine.map((tag) => (
+                          <Chip 
+                            key={tag} 
+                            label={tag} 
+                            size="small"
+                            sx={{ 
+                              backgroundColor: 'primary.light',
+                              color: 'white',
+                              '&:hover': {
+                                backgroundColor: 'primary.main'
+                              }
+                            }}
+                          />
+                        ))}
+                      </Box>
+                    </Box>
+                  </CardContent>
+                </Card>
+
+                {/* Additional Info Card */}
+                <Card>
+                  <CardContent>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                      <InfoIcon color="primary" sx={{ mr: 1 }} />
+                      <Typography variant="h6">
+                        Additional Information
                       </Typography>
                     </Box>
-                    <Typography variant="body2">
-                      Min. order: {restaurant.minOrder}
-                    </Typography>
-                    <Typography variant="body2">
-                      Hours: {restaurant.openingHours}
-                    </Typography>
-                    <Typography variant="body2">
-                      {restaurant.address}
-                    </Typography>
-                  </Box>
-                </Grid>
-              </Grid>
-            </CardContent>
-          </Card>
+                    <Box sx={{ pl: 4 }}>
+                      <Grid container spacing={2}>
+                        <Grid item xs={12} sm={6}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                            <Rating value={restaurant.rating} precision={0.5} size="small" readOnly />
+                            <Typography variant="body2" sx={{ ml: 1 }}>
+                              {restaurant.rating} ({restaurant.totalReviews || 0} reviews)
+                            </Typography>
+                          </Box>
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <AttachMoneyIcon color="action" sx={{ mr: 1 }} />
+                            <Typography variant="body2" sx={{ textTransform: 'capitalize' }}>
+                              {restaurant.priceRange}
+                            </Typography>
+                          </Box>
+                        </Grid>
+                      </Grid>
+                    </Box>
+                  </CardContent>
+                </Card>
 
-          {/* Menu Tabs */}
-          <Tabs
-            value={activeTab}
-            onChange={handleTabChange}
-            variant="scrollable"
-            scrollButtons="auto"
-            sx={{ mb: 2 }}
-          >
-            {restaurant.menuCategories.map((category, index) => (
-              <Tab label={category.name} key={index} />
-            ))}
-          </Tabs>
+                {/* Address Card */}
+                <Card>
+                  <CardContent>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                      <LocationIcon color="primary" sx={{ mr: 1 }} />
+                      <Typography variant="h6">
+                        Location
+                      </Typography>
+                    </Box>
+                    <Box sx={{ pl: 4 }}>
+                      <Typography variant="body1" sx={{ mb: 1 }}>
+                        {restaurant.address.street}
+                      </Typography>
+                      <Typography variant="body1">
+                        {restaurant.address.city}, {restaurant.address.state} {restaurant.address.zipCode}
+                      </Typography>
+                    </Box>
+                  </CardContent>
+                </Card>
 
-          {/* Menu Items */}
-          <Box sx={{ mb: 4 }}>
-            {restaurant.menuCategories.map((category, index) => (
-              <Box
-                key={category.id}
-                role="tabpanel"
-                hidden={activeTab !== index}
-                id={`tabpanel-${index}`}
-              >
-                {activeTab === index && (
-                  <Grid container spacing={2}>
-                    {category.items.map((item) => (
-                      <Grid item xs={12} sm={6} md={4} key={item.id}>
-                        <Card 
-                          onClick={() => openItemDialog(item)}
+                {/* Contact Card */}
+                <Card>
+                  <CardContent>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                      <PhoneIcon color="primary" sx={{ mr: 1 }} />
+                      <Typography variant="h6">
+                        Contact
+                      </Typography>
+                    </Box>
+                    <Box sx={{ pl: 4 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                        <PhoneIcon color="action" sx={{ mr: 1, fontSize: '1.2rem' }} />
+                        <Typography variant="body1">
+                          {restaurant.contactInfo.phone}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <EmailIcon color="action" sx={{ mr: 1, fontSize: '1.2rem' }} />
+                        <Typography variant="body1">
+                          {restaurant.contactInfo.email}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </CardContent>
+                </Card>
+
+                {/* Hours Card */}
+                <Card>
+                  <CardContent>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                      <ScheduleIcon color="primary" sx={{ mr: 1 }} />
+                      <Typography variant="h6">
+                        Opening Hours
+                      </Typography>
+                    </Box>
+                    <Box sx={{ pl: 4 }}>
+                      {Object.entries(restaurant.openingHours || {}).map(([day, time]) => (
+                        <Box 
+                          key={day} 
                           sx={{ 
-                            cursor: 'pointer',
-                            height: '100%',
-                            transition: 'transform 0.2s',
-                            '&:hover': {
-                              transform: 'translateY(-4px)',
-                              boxShadow: 3
-                            }
+                            display: 'flex', 
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            mb: 1,
+                            '&:last-child': { mb: 0 }
                           }}
                         >
-                          <CardMedia
-                            component="img"
-                            height="140"
-                            image={item.image}
-                            alt={item.name}
-                          />
-                          <CardContent>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                              <Typography variant="h6" component="h3">
-                                {item.name}
-                                {item.popular && (
-                                  <Chip 
-                                    label="Popular" 
-                                    size="small" 
-                                    color="primary" 
-                                    sx={{ ml: 1, height: 20, fontSize: '0.7rem' }} 
-                                  />
-                                )}
-                              </Typography>
-                              <Typography variant="subtitle1" fontWeight="bold">
-                                ${item.price.toFixed(2)}
-                              </Typography>
-                            </Box>
-                            <Typography variant="body2" color="text.secondary">
-                              {item.description}
+                          <Typography variant="body1" sx={{ textTransform: 'capitalize' }}>
+                            {day}
+                          </Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <TimeIcon color="action" sx={{ mr: 0.5, fontSize: '1.2rem' }} />
+                            <Typography variant="body1">
+                              {time.open} - {time.close}
                             </Typography>
-                          </CardContent>
-                        </Card>
-                      </Grid>
-                    ))}
-                  </Grid>
-                )}
+                          </Box>
+                        </Box>
+                      ))}
+                    </Box>
+                  </CardContent>
+                </Card>
               </Box>
-            ))}
-          </Box>
+            </Grid>
+          </Grid>
         </Container>
       </Box>
 
@@ -492,7 +557,15 @@ const RestaurantDetail = () => {
             size="large"
             startIcon={<CartIcon />}
             onClick={goToCart}
-            sx={{ px: 4, py: 1.5, borderRadius: 50 }}
+            sx={{ 
+              px: 4, 
+              py: 1.5, 
+              borderRadius: 50,
+              boxShadow: 4,
+              '&:hover': {
+                boxShadow: 6
+              }
+            }}
           >
             View Cart • ${calculateCartTotal()} • {cartItems.reduce((total, item) => total + item.quantity, 0)} items
           </Button>
@@ -512,7 +585,7 @@ const RestaurantDetail = () => {
               <CardMedia
                 component="img"
                 height="200"
-                image={selectedItem.image}
+                image={selectedItem.image || 'https://source.unsplash.com/random/300x200/?food'}
                 alt={selectedItem.name}
               />
               <IconButton
