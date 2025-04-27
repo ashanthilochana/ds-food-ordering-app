@@ -51,72 +51,6 @@ import {
 import { useNavigate, useLocation } from 'react-router-dom';
 import Layout from '../../components/layout/Layout';
 
-// Mock data
-const mockCategories = [
-  { id: 1, name: 'Pizza', active: true, items: 6 },
-  { id: 2, name: 'Pasta', active: true, items: 2 },
-  { id: 3, name: 'Sides', active: true, items: 2 },
-  { id: 4, name: 'Drinks', active: true, items: 2 },
-  { id: 5, name: 'Desserts', active: false, items: 0 }
-];
-
-const mockMenuItems = [
-  {
-    id: 101,
-    name: 'Margherita Pizza',
-    description: 'Classic pizza with tomato sauce, mozzarella, and basil',
-    price: 12.99,
-    categoryId: 1,
-    image: 'https://source.unsplash.com/random/300x200/?margherita-pizza',
-    active: true,
-    popular: true,
-    options: [
-      { name: 'Size', choices: ['Small (+$0)', 'Medium (+$2)', 'Large (+$4)'] },
-      { name: 'Crust', choices: ['Thin', 'Thick', 'Stuffed (+$3)'] }
-    ]
-  },
-  {
-    id: 102,
-    name: 'Pepperoni Pizza',
-    description: 'Pizza with tomato sauce, mozzarella and pepperoni',
-    price: 14.99,
-    categoryId: 1,
-    image: 'https://source.unsplash.com/random/300x200/?pepperoni-pizza',
-    active: true,
-    popular: true,
-    options: [
-      { name: 'Size', choices: ['Small (+$0)', 'Medium (+$2)', 'Large (+$4)'] },
-      { name: 'Crust', choices: ['Thin', 'Thick', 'Stuffed (+$3)'] }
-    ]
-  },
-  {
-    id: 201,
-    name: 'Spaghetti Bolognese',
-    description: 'Spaghetti with rich meat sauce and parmesan',
-    price: 10.99,
-    categoryId: 2,
-    image: 'https://source.unsplash.com/random/300x200/?spaghetti',
-    active: true,
-    popular: true,
-    options: [
-      { name: 'Size', choices: ['Regular', 'Large (+$3)'] }
-    ]
-  },
-  {
-    id: 301,
-    name: 'Garlic Bread',
-    description: 'Toasted bread with garlic butter and herbs',
-    price: 4.99,
-    categoryId: 3,
-    image: 'https://source.unsplash.com/random/300x200/?garlic-bread',
-    active: true,
-    popular: false,
-    options: [
-      { name: 'Add-ons', choices: ['Cheese (+$1)'] }
-    ]
-  }
-];
-
 const MenuManagement = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -132,16 +66,45 @@ const MenuManagement = () => {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   useEffect(() => {
-    // Simulating API call to fetch categories and menu items
-    setTimeout(() => {
-      setCategories(mockCategories);
-      setMenuItems(mockMenuItems);
-      if (mockCategories.length > 0) {
-        setSelectedCategory(mockCategories[0].id);
+    const fetchMenuData = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch(`/api/menu-items/restaurant/${restaurantId}`);
+        if (!response.ok) throw new Error('Failed to fetch menu items');
+        const items = await response.json();
+        setMenuItems(items);
+
+        // Build categories from items
+        const categoriesMap = {};
+        items.forEach(item => {
+          if (!categoriesMap[item.category]) {
+            categoriesMap[item.category] = {
+              id: item.category,
+              name: item.category.charAt(0).toUpperCase() + item.category.slice(1),
+              active: true,
+              items: 1
+            };
+          } else {
+            categoriesMap[item.category].items += 1;
+          }
+        });
+        const categoriesArr = Object.values(categoriesMap);
+        setCategories(categoriesArr);
+        if (categoriesArr.length > 0) {
+          setSelectedCategory(categoriesArr[0].id);
+        }
+      } catch (error) {
+        setSnackbar({
+          open: true,
+          message: 'Failed to fetch menu data',
+          severity: 'error'
+        });
       }
       setLoading(false);
-    }, 1000);
-  }, []);
+    };
+
+    fetchMenuData();
+  }, [restaurantId]);
 
   const handleCategorySelect = (categoryId) => {
     setSelectedCategory(categoryId);
@@ -327,7 +290,7 @@ const MenuManagement = () => {
     });
   };
 
-  const handleSaveItem = () => {
+  const handleSaveItem = async () => {
     if (!currentItem.name.trim()) {
       setSnackbar({
         open: true,
@@ -346,41 +309,60 @@ const MenuManagement = () => {
       return;
     }
 
-    if (currentItem.id) {
-      // Update existing item
-      const updatedItems = menuItems.map(item => 
-        item.id === currentItem.id ? { ...currentItem } : item
-      );
-      setMenuItems(updatedItems);
+    try {
+      const token = localStorage.getItem('token');
+      let response, data;
+      if (currentItem.id) {
+        // Update existing item
+        response = await fetch(`/api/menu-items/${currentItem.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(currentItem)
+        });
+        if (!response.ok) throw new Error('Failed to update menu item');
+        data = await response.json();
+        setSnackbar({
+          open: true,
+          message: 'Menu item updated successfully',
+          severity: 'success'
+        });
+      } else {
+        // Add new item
+        const itemToSend = {
+          ...currentItem,
+          restaurant: restaurantId,
+          // You may need to map categoryId to category if your backend expects a string
+          category: currentItem.categoryId || selectedCategory,
+        };
+        response = await fetch('/api/menu-items', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(itemToSend)
+        });
+        if (!response.ok) throw new Error('Failed to add menu item');
+        data = await response.json();
+        setSnackbar({
+          open: true,
+          message: 'Menu item added successfully',
+          severity: 'success'
+        });
+      }
+      setOpenItemDialog(false);
+      // Refresh menu items from backend
+      fetchMenuData();
+    } catch (error) {
       setSnackbar({
         open: true,
-        message: 'Menu item updated successfully',
-        severity: 'success'
-      });
-    } else {
-      // Add new item
-      const newItem = {
-        ...currentItem,
-        id: Math.max(0, ...menuItems.map(i => i.id)) + 1
-      };
-      setMenuItems([...menuItems, newItem]);
-      
-      // Update category item count
-      const updatedCategories = categories.map(cat => {
-        if (cat.id === currentItem.categoryId) {
-          return { ...cat, items: cat.items + 1 };
-        }
-        return cat;
-      });
-      setCategories(updatedCategories);
-      
-      setSnackbar({
-        open: true,
-        message: 'Menu item added successfully',
-        severity: 'success'
+        message: error.message || 'Failed to save menu item',
+        severity: 'error'
       });
     }
-    setOpenItemDialog(false);
   };
 
   const handleDeleteItem = (itemId) => {
@@ -424,6 +406,48 @@ const MenuManagement = () => {
     setSnackbar({ ...snackbar, open: false });
   };
 
+  const handleRefresh = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/menu-items/restaurant/${restaurantId}`);
+      if (!response.ok) throw new Error('Failed to fetch menu items');
+      const items = await response.json();
+      setMenuItems(items);
+
+      // Rebuild categories as above
+      const categoriesMap = {};
+      items.forEach(item => {
+        if (!categoriesMap[item.category]) {
+          categoriesMap[item.category] = {
+            id: item.category,
+            name: item.category.charAt(0).toUpperCase() + item.category.slice(1),
+            active: true,
+            items: 1
+          };
+        } else {
+          categoriesMap[item.category].items += 1;
+        }
+      });
+      const categoriesArr = Object.values(categoriesMap);
+      setCategories(categoriesArr);
+      if (categoriesArr.length > 0) {
+        setSelectedCategory(categoriesArr[0].id);
+      }
+      setSnackbar({
+        open: true,
+        message: 'Menu refreshed',
+        severity: 'success'
+      });
+    } catch (error) {
+      setSnackbar({
+        open: true,
+        message: 'Failed to refresh menu',
+        severity: 'error'
+      });
+    }
+    setLoading(false);
+  };
+
   const filteredItems = menuItems.filter(item => item.categoryId === selectedCategory);
 
   if (loading) {
@@ -448,9 +472,9 @@ const MenuManagement = () => {
               >
                 Back to Dashboard
               </Button>
-            <Typography variant="h4" component="h1">
-              Menu Management
-            </Typography>
+              <Typography variant="h4" component="h1">
+                Menu Management
+              </Typography>
             </Box>
             <Button
               variant="contained"
