@@ -49,7 +49,7 @@ const auth = async (req, res, next) => {
 // Middleware to check if user is restaurant owner
 const isRestaurantOwner = async (req, res, next) => {
   try {
-    if (req.user.role !== 'restaurant_owner') {
+    if (req.user.role !== 'restaurant_admin') {
       return res.status(403).json({ message: 'Access denied. Not a restaurant owner.' });
     }
     next();

@@ -33,11 +33,6 @@ exports.getRestaurants = async (req, res) => {
     const { cuisine, priceRange, rating, search } = req.query;
     const query = {};
 
-    // Only show restaurants for the logged-in owner if role is restaurant_owner
-    if (req.user && req.user.role === 'restaurant_owner' && req.user._id) {
-      query.owner = req.user._id;
-    }
-
     if (cuisine) query['cuisine'] = { $in: [cuisine] };
     if (priceRange) query.priceRange = priceRange;
     if (rating) query.rating = { $gte: parseFloat(rating) };
@@ -132,20 +127,6 @@ exports.toggleRestaurantStatus = async (req, res) => {
     await restaurant.save();
 
     res.json({ message: `Restaurant is now ${restaurant.isActive ? 'active' : 'inactive'}` });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-// Get all restaurants for the logged-in owner
-exports.getRestaurantsByOwner = async (req, res) => {
-  try {
-    console.log('req.user:', req.user);
-    if (!req.user || req.user.role !== 'restaurant_owner' || !req.user._id) {
-      return res.status(403).json({ message: 'Not authorized' });
-    }
-    const restaurants = await Restaurant.find({ owner: req.user._id });
-    res.json(restaurants);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

@@ -17,21 +17,19 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../../components/layout/Layout';
-import { restaurantService } from '../../services/restaurantService';
 
 const AddRestaurant = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
-    description: '',
-    address: { street: '', city: '', zip: '' },
-    cuisine: [],
-    priceRange: '',
+    cuisine: '',
+    address: '',
     phone: '',
     openingHours: '',
     deliveryTime: '',
     deliveryFee: '',
     minOrder: '',
+    description: '',
     tags: []
   });
   const [tagInput, setTagInput] = useState('');
@@ -73,14 +71,9 @@ const AddRestaurant = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const payload = {
-        name: formData.name,
-        description: formData.description,
-        address: formData.address,
-        cuisine: formData.cuisine,
-        priceRange: formData.priceRange,
-      };
-      await restaurantService.addRestaurant(payload);
+      // TODO: Replace with actual API call
+      // const response = await restaurantService.addRestaurant(formData);
+      console.log('Restaurant data:', formData);
       setSuccess(true);
       setTimeout(() => {
         navigate('/dashboard');
@@ -109,87 +102,14 @@ const AddRestaurant = () => {
                   onChange={handleChange}
                 />
               </Grid>
-              <Grid item xs={12}>
+              <Grid item xs={12} sm={6}>
                 <TextField
                   required
                   fullWidth
-                  label="Description"
-                  name="description"
-                  value={formData.description}
-                  onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  multiline
-                  rows={3}
-                />
-              </Grid>
-              <Grid item xs={12} sm={4}>
-                <TextField
-                  required
-                  fullWidth
-                  label="Street"
-                  name="street"
-                  value={formData.address.street}
-                  onChange={e => setFormData(prev => ({
-                    ...prev,
-                    address: { ...prev.address, street: e.target.value }
-                  }))}
-                />
-              </Grid>
-              <Grid item xs={12} sm={4}>
-                <TextField
-                  required
-                  fullWidth
-                  label="City"
-                  name="city"
-                  value={formData.address.city}
-                  onChange={e => setFormData(prev => ({
-                    ...prev,
-                    address: { ...prev.address, city: e.target.value }
-                  }))}
-                />
-              </Grid>
-              <Grid item xs={12} sm={4}>
-                <TextField
-                  required
-                  fullWidth
-                  label="Zip"
-                  name="zip"
-                  value={formData.address.zip}
-                  onChange={e => setFormData(prev => ({
-                    ...prev,
-                    address: { ...prev.address, zip: e.target.value }
-                  }))}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <FormControl fullWidth required>
-                  <InputLabel>Price Range</InputLabel>
-                  <Select
-                    name="priceRange"
-                    value={formData.priceRange}
-                    label="Price Range"
-                    onChange={e => setFormData(prev => ({ ...prev, priceRange: e.target.value }))}
-                  >
-                    <MenuItem value="budget">Budget</MenuItem>
-                    <MenuItem value="moderate">Moderate</MenuItem>
-                    <MenuItem value="expensive">Expensive</MenuItem>
-                    <MenuItem value="luxury">Luxury</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  required
-                  fullWidth
-                  label="Cuisines (comma separated)"
+                  label="Cuisine Type"
                   name="cuisine"
-                  value={formData.cuisine.join(', ')}
-                  onChange={e =>
-                    setFormData(prev => ({
-                      ...prev,
-                      cuisine: e.target.value.split(',').map(c => c.trim()).filter(Boolean)
-                    }))
-                  }
-                  placeholder="e.g., Indian, Chinese"
+                  value={formData.cuisine}
+                  onChange={handleChange}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -206,6 +126,18 @@ const AddRestaurant = () => {
                 <TextField
                   required
                   fullWidth
+                  label="Address"
+                  name="address"
+                  value={formData.address}
+                  onChange={handleChange}
+                  multiline
+                  rows={2}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  required
+                  fullWidth
                   label="Opening Hours"
                   name="openingHours"
                   value={formData.openingHours}
@@ -213,7 +145,7 @@ const AddRestaurant = () => {
                   placeholder="e.g., 9:00 AM - 10:00 PM"
                 />
               </Grid>
-              <Grid item xs={12}>
+              <Grid item xs={12} sm={6}>
                 <TextField
                   required
                   fullWidth
@@ -224,7 +156,7 @@ const AddRestaurant = () => {
                   placeholder="e.g., 30-45 min"
                 />
               </Grid>
-              <Grid item xs={12}>
+              <Grid item xs={12} sm={6}>
                 <TextField
                   required
                   fullWidth
@@ -235,7 +167,7 @@ const AddRestaurant = () => {
                   placeholder="e.g., $2.99"
                 />
               </Grid>
-              <Grid item xs={12}>
+              <Grid item xs={12} sm={6}>
                 <TextField
                   required
                   fullWidth
@@ -244,6 +176,17 @@ const AddRestaurant = () => {
                   value={formData.minOrder}
                   onChange={handleChange}
                   placeholder="e.g., $10"
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  multiline
+                  rows={3}
                 />
               </Grid>
               <Grid item xs={12}>

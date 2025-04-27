@@ -472,9 +472,9 @@ const MenuManagement = () => {
               >
                 Back to Dashboard
               </Button>
-            <Typography variant="h4" component="h1">
-              Menu Management
-            </Typography>
+              <Typography variant="h4" component="h1">
+                Menu Management
+              </Typography>
             </Box>
             <Button
               variant="contained"

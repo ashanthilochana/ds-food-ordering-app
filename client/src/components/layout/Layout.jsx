@@ -1,21 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Container, Box } from '@mui/material';
 import Navbar from './Navbar';
 import { useLocation } from 'react-router-dom';
-import authService from '../../services/auth.service';
 
 const Layout = ({ children, cartItems }) => {
   const location = useLocation();
-  const [userRole, setUserRole] = useState('guest');
   
-  useEffect(() => {
-    const user = authService.getCurrentUser();
-    if (user && user.user && user.user.role) {
-      setUserRole(user.user.role);
+  // Determine user role based on URL path
+  const getUserRole = () => {
+    const path = location.pathname;
+    if (path.includes('restaurant-')) {
+      return 'restaurant';
+    } else if (path.includes('delivery-')) {
+      return 'delivery';
+    } else if (path.includes('login') || path === '/') {
+      return 'guest';
     } else {
-      setUserRole('guest');
+      return 'customer';
     }
-  }, [location.pathname]);
+  };
+
+  const userRole = getUserRole();
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
