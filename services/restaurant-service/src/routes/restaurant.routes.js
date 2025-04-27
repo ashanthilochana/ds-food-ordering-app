@@ -154,4 +154,18 @@ router.delete('/:id', auth, restaurantController.deleteRestaurant);
  */
 router.patch('/:id/toggle-status', auth, restaurantController.toggleRestaurantStatus);
 
+/**
+ * @swagger
+ * /api/restaurants/admin/me:
+ *   get:
+ *     summary: Get restaurants by admin ID
+ *     tags: [Restaurants]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of restaurants owned by the admin
+ */
+router.get('/admin/me', auth, isRestaurantOwner, restaurantController.getRestaurantsByAdminId);
+
 module.exports = router;

@@ -70,9 +70,45 @@ const restaurantService = {
     return response.data;
   },
 
+  // Get restaurants by admin ID
+  getRestaurantsByAdminId: async () => {
+    const response = await api.get('/restaurants/admin/me');
+    return response.data;
+  },
+
   // Get restaurant by ID
   getRestaurantById: async (id) => {
     const response = await api.get(`/restaurants/${id}`);
+    return response.data;
+  },
+
+  // Get restaurant orders
+  getRestaurantOrders: async (restaurantId) => {
+    const response = await api.get(`/restaurants/${restaurantId}/orders`);
+    return response.data;
+  },
+
+  // Get restaurant menu items
+  getRestaurantMenuItems: async (restaurantId) => {
+    const response = await api.get(`/restaurants/${restaurantId}/menu-items`);
+    return response.data;
+  },
+
+  // Create new menu item
+  createMenuItem: async (restaurantId, menuItemData) => {
+    const response = await api.post(`/restaurants/${restaurantId}/menu-items`, menuItemData);
+    return response.data;
+  },
+
+  // Update menu item
+  updateMenuItem: async (restaurantId, menuItemId, menuItemData) => {
+    const response = await api.put(`/restaurants/${restaurantId}/menu-items/${menuItemId}`, menuItemData);
+    return response.data;
+  },
+
+  // Delete menu item
+  deleteMenuItem: async (restaurantId, menuItemId) => {
+    const response = await api.delete(`/restaurants/${restaurantId}/menu-items/${menuItemId}`);
     return response.data;
   },
 
