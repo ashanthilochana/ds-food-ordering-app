@@ -179,7 +179,7 @@ const RestaurantDetailDashboard = () => {
             <Button
               variant="contained"
               startIcon={<MenuIcon />}
-              onClick={() => navigate('/menu-management')}
+              onClick={() => navigate(`/menu-management?restaurantId=${restaurantId}`)}
             >
               Manage Menu
             </Button>
@@ -329,14 +329,14 @@ const RestaurantDetailDashboard = () => {
                   <Button 
                     variant="contained"
                     startIcon={<AddIcon />}
-                    onClick={() => navigate('/menu-management')}
+                    onClick={() => navigate(`/menu-management?restaurantId=${restaurantId}`)}
                     sx={{ mr: 1 }}
                   >
                     Add Item
                   </Button>
                   <Button 
                     variant="text" 
-                    onClick={() => navigate('/menu-management')}
+                    onClick={() => navigate(`/menu-management?restaurantId=${restaurantId}`)}
                   >
                     Manage Menu
                   </Button>
