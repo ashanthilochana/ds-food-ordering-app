@@ -50,6 +50,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Layout from '../../components/layout/Layout';
+import restaurantService from '../../services/restaurant.service';
 
 // Mock data
 const mockCategories = [
@@ -124,6 +125,7 @@ const MenuManagement = () => {
   const [categories, setCategories] = useState([]);
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [openItemDialog, setOpenItemDialog] = useState(false);
   const [openCategoryDialog, setOpenCategoryDialog] = useState(false);
@@ -132,16 +134,40 @@ const MenuManagement = () => {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   useEffect(() => {
-    // Simulating API call to fetch categories and menu items
-    setTimeout(() => {
-      setCategories(mockCategories);
-      setMenuItems(mockMenuItems);
-      if (mockCategories.length > 0) {
-        setSelectedCategory(mockCategories[0].id);
+    const fetchMenuItems = async () => {
+      try {
+        setLoading(true);
+        const data = await restaurantService.getRestaurantMenuItems(restaurantId);
+        setMenuItems(data);
+        
+        // Extract unique categories from menu items
+        const uniqueCategories = [...new Set(data.map(item => item.category))].map(category => ({
+          id: category,
+          name: category,
+          active: true,
+          items: data.filter(item => item.category === category).length
+        }));
+        
+        setCategories(uniqueCategories);
+        if (uniqueCategories.length > 0) {
+          setSelectedCategory(uniqueCategories[0].id);
+        }
+        setError('');
+      } catch (err) {
+        setError('Failed to load menu items. Please try again.');
+        console.error('Error fetching menu items:', err);
+      } finally {
+        setLoading(false);
       }
+    };
+
+    if (restaurantId) {
+      fetchMenuItems();
+    } else {
+      setError('Restaurant ID is required');
       setLoading(false);
-    }, 1000);
-  }, []);
+    }
+  }, [restaurantId]);
 
   const handleCategorySelect = (categoryId) => {
     setSelectedCategory(categoryId);
@@ -327,7 +353,7 @@ const MenuManagement = () => {
     });
   };
 
-  const handleSaveItem = () => {
+  const handleSaveItem = async () => {
     if (!currentItem.name.trim()) {
       setSnackbar({
         open: true,
@@ -346,29 +372,63 @@ const MenuManagement = () => {
       return;
     }
 
-    if (currentItem.id) {
-      // Update existing item
-      const updatedItems = menuItems.map(item => 
-        item.id === currentItem.id ? { ...currentItem } : item
-      );
-      setMenuItems(updatedItems);
+    try {
+      if (currentItem.id) {
+        // Update existing item
+        await restaurantService.updateMenuItem(restaurantId, currentItem.id, currentItem);
+        const updatedItems = menuItems.map(item => 
+          item.id === currentItem.id ? { ...currentItem } : item
+        );
+        setMenuItems(updatedItems);
+        setSnackbar({
+          open: true,
+          message: 'Menu item updated successfully',
+          severity: 'success'
+        });
+      } else {
+        // Add new item
+        const newItem = await restaurantService.createMenuItem(restaurantId, {
+          ...currentItem,
+          restaurant: restaurantId
+        });
+        setMenuItems([...menuItems, newItem]);
+        
+        // Update category item count
+        const updatedCategories = categories.map(cat => {
+          if (cat.id === currentItem.categoryId) {
+            return { ...cat, items: cat.items + 1 };
+          }
+          return cat;
+        });
+        setCategories(updatedCategories);
+        
+        setSnackbar({
+          open: true,
+          message: 'Menu item added successfully',
+          severity: 'success'
+        });
+      }
+      setOpenItemDialog(false);
+    } catch (err) {
       setSnackbar({
         open: true,
-        message: 'Menu item updated successfully',
-        severity: 'success'
+        message: 'Failed to save menu item. Please try again.',
+        severity: 'error'
       });
-    } else {
-      // Add new item
-      const newItem = {
-        ...currentItem,
-        id: Math.max(0, ...menuItems.map(i => i.id)) + 1
-      };
-      setMenuItems([...menuItems, newItem]);
+    }
+  };
+
+  const handleDeleteItem = async (itemId) => {
+    try {
+      await restaurantService.deleteMenuItem(restaurantId, itemId);
+      const itemToDelete = menuItems.find(item => item.id === itemId);
+      const updatedItems = menuItems.filter(item => item.id !== itemId);
+      setMenuItems(updatedItems);
       
       // Update category item count
       const updatedCategories = categories.map(cat => {
-        if (cat.id === currentItem.categoryId) {
-          return { ...cat, items: cat.items + 1 };
+        if (cat.id === itemToDelete.categoryId) {
+          return { ...cat, items: cat.items - 1 };
         }
         return cat;
       });
@@ -376,32 +436,16 @@ const MenuManagement = () => {
       
       setSnackbar({
         open: true,
-        message: 'Menu item added successfully',
+        message: 'Menu item deleted successfully',
         severity: 'success'
       });
+    } catch (err) {
+      setSnackbar({
+        open: true,
+        message: 'Failed to delete menu item. Please try again.',
+        severity: 'error'
+      });
     }
-    setOpenItemDialog(false);
-  };
-
-  const handleDeleteItem = (itemId) => {
-    const itemToDelete = menuItems.find(item => item.id === itemId);
-    const updatedItems = menuItems.filter(item => item.id !== itemId);
-    setMenuItems(updatedItems);
-    
-    // Update category item count
-    const updatedCategories = categories.map(cat => {
-      if (cat.id === itemToDelete.categoryId) {
-        return { ...cat, items: cat.items - 1 };
-      }
-      return cat;
-    });
-    setCategories(updatedCategories);
-    
-    setSnackbar({
-      open: true,
-      message: 'Menu item deleted successfully',
-      severity: 'success'
-    });
   };
 
   const handleToggleItemActive = (itemId, active) => {

@@ -131,3 +131,13 @@ exports.toggleRestaurantStatus = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// Get restaurants by admin ID
+exports.getRestaurantsByAdminId = async (req, res) => {
+  try {
+    const restaurants = await Restaurant.find({ owner: req.user._id });
+    res.json(restaurants);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

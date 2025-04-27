@@ -9,7 +9,8 @@ import {
   CardContent,
   Button,
   CircularProgress,
-  Rating
+  Rating,
+  Alert
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -17,38 +18,30 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../../components/layout/Layout';
-
-// Mock data - replace with API calls
-const mockRestaurants = [
-    {
-    id: 1,
-    name: 'Pizza Palace',
-    cuisine: 'Italian',
-    address: '123 Main St',
-    rating: 4.5,
-    status: 'active'
-    },
-    {
-    id: 2,
-    name: 'Burger Hub',
-    cuisine: 'American',
-    address: '456 Oak Ave',
-    rating: 4.2,
-    status: 'active'
-  }
-];
+import restaurantService from '../../services/restaurant.service';
 
 const RestaurantDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [restaurants, setRestaurants] = useState([]);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setRestaurants(mockRestaurants);
-      setLoading(false);
-    }, 1000);
+    const fetchRestaurants = async () => {
+      try {
+        setLoading(true);
+        const data = await restaurantService.getRestaurantsByAdminId();
+        setRestaurants(data);
+        setError('');
+      } catch (err) {
+        setError('Failed to load restaurants. Please try again.');
+        console.error('Error fetching restaurants:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRestaurants();
   }, []);
 
   if (loading) {
@@ -66,55 +59,70 @@ const RestaurantDashboard = () => {
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
         {/* Restaurant Management Section */}
         <Paper sx={{ p: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
             <Typography variant="h5">
               My Restaurants
-          </Typography>
-          <Button
+            </Typography>
+            <Button
               variant="contained"
               startIcon={<AddIcon />}
               onClick={() => navigate('/add-restaurant')}
-          >
+            >
               Add New Restaurant
-          </Button>
-        </Box>
-        <Grid container spacing={3}>
-            {restaurants.map((restaurant) => (
-              <Grid item xs={12} sm={6} md={4} key={restaurant.id}>
-                <Card 
-                  sx={{ 
-                    height: '100%',
-                    cursor: 'pointer',
-                    '&:hover': {
-                      boxShadow: 6
-                    }
-                  }}
-                  onClick={() => navigate(`/restaurant-dashboard/${restaurant.id}`)}
-                >
-                  <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      <RestaurantIcon color="primary" sx={{ mr: 1 }} />
-                      <Typography variant="h6" component="div">
-                        {restaurant.name}
+            </Button>
+          </Box>
+
+          {error && (
+            <Alert severity="error" sx={{ mb: 3 }}>
+              {error}
+            </Alert>
+          )}
+
+          {restaurants.length === 0 ? (
+            <Box sx={{ textAlign: 'center', py: 4 }}>
+              <Typography variant="h6" color="text.secondary">
+                No restaurants found. Add your first restaurant!
+              </Typography>
+            </Box>
+          ) : (
+            <Grid container spacing={3}>
+              {restaurants.map((restaurant) => (
+                <Grid item xs={12} sm={6} md={4} key={restaurant._id}>
+                  <Card 
+                    sx={{ 
+                      height: '100%',
+                      cursor: 'pointer',
+                      '&:hover': {
+                        boxShadow: 6
+                      }
+                    }}
+                    onClick={() => navigate(`/restaurant-dashboard/${restaurant._id}`)}
+                  >
+                    <CardContent>
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                        <RestaurantIcon color="primary" sx={{ mr: 1 }} />
+                        <Typography variant="h6" component="div">
+                          {restaurant.name}
+                        </Typography>
+                      </Box>
+                      <Typography color="text.secondary" gutterBottom>
+                        {restaurant.cuisine.join(', ')}
                       </Typography>
-                    </Box>
-                    <Typography color="text.secondary" gutterBottom>
-                      {restaurant.cuisine}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" paragraph>
-                      {restaurant.address}
-                    </Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <Rating value={restaurant.rating} precision={0.5} size="small" readOnly />
-                      <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-                        {restaurant.rating}
+                      <Typography variant="body2" color="text.secondary" paragraph>
+                        {restaurant.address.street}, {restaurant.address.city}
                       </Typography>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-                ))}
-          </Grid>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <Rating value={restaurant.rating || 0} precision={0.5} size="small" readOnly />
+                        <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
+                          {restaurant.rating || 'No ratings yet'}
+                        </Typography>
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          )}
         </Paper>
       </Container>
     </Layout>
