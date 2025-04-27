@@ -15,7 +15,8 @@ import {
   Chip,
   CircularProgress,
   Rating,
-  LinearProgress
+  LinearProgress,
+  Alert
 } from '@mui/material';
 import {
   RestaurantMenu as MenuIcon,
@@ -25,84 +26,88 @@ import {
   Star as StarIcon,
   Schedule as TimeIcon,
   Refresh as RefreshIcon,
-  ArrowBack as BackIcon
+  ArrowBack as BackIcon,
+  Add as AddIcon
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import Layout from '../../components/layout/Layout';
-
-// Mock data - replace with API calls
-const getMockRestaurantData = (restaurantId) => ({
-  restaurant: {
-    id: restaurantId,
-    name: 'Pizza Palace',
-    cuisine: 'Italian',
-    address: '123 Main St',
-    rating: 4.5,
-    status: 'active'
-  },
-  todayStats: {
-    orders: 24,
-    revenue: 856.50,
-    avgOrderValue: 35.69,
-    avgPrepTime: 22
-  },
-  recentOrders: [
-    {
-      id: '12345',
-      customerName: 'John Doe',
-      items: ['2x Margherita Pizza', '1x Garlic Bread'],
-      total: 42.98,
-      status: 'preparing',
-      time: '10 mins ago'
-    },
-    {
-      id: '12344',
-      customerName: 'Jane Smith',
-      items: ['1x Pepperoni Pizza', '2x Coke'],
-      total: 28.97,
-      status: 'ready',
-      time: '15 mins ago'
-    }
-  ],
-  popularItems: [
-    { name: 'Margherita Pizza', orders: 158, rating: 4.8 },
-    { name: 'Pepperoni Pizza', orders: 142, rating: 4.7 },
-    { name: 'Garlic Bread', orders: 97, rating: 4.5 }
-  ],
-  ratings: {
-    average: 4.6,
-    total: 253,
-    distribution: [
-      { stars: 5, count: 150 },
-      { stars: 4, count: 80 },
-      { stars: 3, count: 15 },
-      { stars: 2, count: 5 },
-      { stars: 1, count: 3 }
-    ]
-  }
-});
+import restaurantService from '../../services/restaurant.service';
 
 const RestaurantDetailDashboard = () => {
   const { restaurantId } = useParams();
   const [loading, setLoading] = useState(true);
-  const [dashboardData, setDashboardData] = useState(null);
+  const [error, setError] = useState('');
+  const [restaurant, setRestaurant] = useState(null);
+  const [stats, setStats] = useState({
+    todayOrders: 0,
+    todayRevenue: 0,
+    avgOrderValue: 0,
+    avgPrepTime: 0,
+    rating: 0,
+    totalReviews: 0
+  });
+  const [recentOrders, setRecentOrders] = useState([]);
+  const [popularItems, setPopularItems] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setDashboardData(getMockRestaurantData(restaurantId));
-      setLoading(false);
-    }, 1000);
+    const fetchRestaurantData = async () => {
+      try {
+        setLoading(true);
+        const data = await restaurantService.getRestaurantById(restaurantId);
+        setRestaurant(data);
+        
+        // TODO: Replace with actual API calls when implemented
+        // For now, using mock data
+        setStats({
+          todayOrders: 24,
+          todayRevenue: 856.50,
+          avgOrderValue: 35.69,
+          avgPrepTime: 22,
+          rating: data.rating || 0,
+          totalReviews: 253
+        });
+        
+        setRecentOrders([
+          {
+            id: '12345',
+            customerName: 'John Doe',
+            items: ['2x Margherita Pizza', '1x Garlic Bread'],
+            total: 42.98,
+            status: 'preparing',
+            time: '10 mins ago'
+          },
+          {
+            id: '12344',
+            customerName: 'Jane Smith',
+            items: ['1x Pepperoni Pizza', '2x Coke'],
+            total: 28.97,
+            status: 'ready',
+            time: '15 mins ago'
+          }
+        ]);
+        
+        setPopularItems([
+          { name: 'Margherita Pizza', orders: 158, rating: 4.8 },
+          { name: 'Pepperoni Pizza', orders: 142, rating: 4.7 },
+          { name: 'Garlic Bread', orders: 97, rating: 4.5 }
+        ]);
+        
+        setError('');
+      } catch (err) {
+        setError('Failed to load restaurant data. Please try again.');
+        console.error('Error fetching restaurant data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRestaurantData();
   }, [restaurantId]);
 
   const handleRefresh = () => {
-    setLoading(true);
-    // Simulate API refresh
-    setTimeout(() => {
-      setDashboardData(getMockRestaurantData(restaurantId));
-      setLoading(false);
-    }, 1000);
+    // TODO: Implement refresh functionality
+    window.location.reload();
   };
 
   const getStatusColor = (status) => {
@@ -130,6 +135,23 @@ const RestaurantDetailDashboard = () => {
     );
   }
 
+  if (error) {
+    return (
+      <Layout>
+        <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+          <Alert severity="error">{error}</Alert>
+          <Button
+            startIcon={<BackIcon />}
+            onClick={() => navigate('/dashboard')}
+            sx={{ mt: 2 }}
+          >
+            Back to Restaurants
+          </Button>
+        </Container>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
@@ -143,14 +165,14 @@ const RestaurantDetailDashboard = () => {
               Back to Restaurants
             </Button>
             <Typography variant="h4" component="h1">
-              {dashboardData.restaurant.name} Dashboard
+              {restaurant.name} Dashboard
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', gap: 2 }}>
             <Button
               variant="contained"
               startIcon={<OrderIcon />}
-              onClick={() => navigate(`/restaurant-orders?restaurantId=${restaurantId}`)}
+              onClick={() => navigate('/restaurant-orders')}
             >
               Manage Orders
             </Button>
@@ -180,7 +202,7 @@ const RestaurantDetailDashboard = () => {
                   Today's Orders
                 </Typography>
                 <Typography variant="h4" component="div">
-                  {dashboardData.todayStats.orders}
+                  {stats.todayOrders}
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
                   <OrderIcon color="primary" sx={{ mr: 1 }} />
@@ -198,12 +220,12 @@ const RestaurantDetailDashboard = () => {
                   Today's Revenue
                 </Typography>
                 <Typography variant="h4" component="div">
-                  ${dashboardData.todayStats.revenue.toFixed(2)}
+                  ${stats.todayRevenue.toFixed(2)}
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
                   <RevenueIcon color="success" sx={{ mr: 1 }} />
                   <Typography variant="body2" color="text.secondary">
-                    ${dashboardData.todayStats.avgOrderValue.toFixed(2)} avg. order
+                    ${stats.avgOrderValue.toFixed(2)} avg. order
                   </Typography>
                 </Box>
               </CardContent>
@@ -216,7 +238,7 @@ const RestaurantDetailDashboard = () => {
                   Avg. Prep Time
                 </Typography>
                 <Typography variant="h4" component="div">
-                  {dashboardData.todayStats.avgPrepTime}m
+                  {stats.avgPrepTime}m
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
                   <TimeIcon color="warning" sx={{ mr: 1 }} />
@@ -234,12 +256,12 @@ const RestaurantDetailDashboard = () => {
                   Rating
                 </Typography>
                 <Typography variant="h4" component="div">
-                  {dashboardData.ratings.average}
+                  {stats.rating.toFixed(1)}
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
                   <StarIcon color="primary" sx={{ mr: 1 }} />
                   <Typography variant="body2" color="text.secondary">
-                    {dashboardData.ratings.total} reviews
+                    {stats.totalReviews} reviews
                   </Typography>
                 </Box>
               </CardContent>
@@ -255,13 +277,13 @@ const RestaurantDetailDashboard = () => {
                 <Typography variant="h6">Recent Orders</Typography>
                 <Button 
                   variant="text" 
-                  onClick={() => navigate(`/restaurant-orders?restaurantId=${restaurantId}`)}
+                  onClick={() => navigate('/restaurant-orders')}
                 >
                   View All
                 </Button>
               </Box>
               <List>
-                {dashboardData.recentOrders.map((order, index) => (
+                {recentOrders.map((order, index) => (
                   <React.Fragment key={order.id}>
                     <ListItem
                       sx={{ px: 0, py: 2 }}
@@ -291,7 +313,7 @@ const RestaurantDetailDashboard = () => {
                         }
                       />
                     </ListItem>
-                    {index < dashboardData.recentOrders.length - 1 && <Divider />}
+                    {index < recentOrders.length - 1 && <Divider />}
                   </React.Fragment>
                 ))}
               </List>
@@ -303,15 +325,25 @@ const RestaurantDetailDashboard = () => {
             <Paper sx={{ p: 2, height: '100%' }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h6">Popular Items</Typography>
-                <Button 
-                  variant="text" 
-                  onClick={() => navigate(`/menu-management?restaurantId=${restaurantId}`)}
-                >
-                  Manage Menu
-                </Button>
+                <Box>
+                  <Button 
+                    variant="contained"
+                    startIcon={<AddIcon />}
+                    onClick={() => navigate(`/menu-management?restaurantId=${restaurantId}`)}
+                    sx={{ mr: 1 }}
+                  >
+                    Add Item
+                  </Button>
+                  <Button 
+                    variant="text" 
+                    onClick={() => navigate(`/menu-management?restaurantId=${restaurantId}`)}
+                  >
+                    Manage Menu
+                  </Button>
+                </Box>
               </Box>
               <List>
-                {dashboardData.popularItems.map((item, index) => (
+                {popularItems.map((item, index) => (
                   <React.Fragment key={item.name}>
                     <ListItem sx={{ px: 0, py: 2 }}>
                       <ListItemText
@@ -333,42 +365,10 @@ const RestaurantDetailDashboard = () => {
                         }
                       />
                     </ListItem>
-                    {index < dashboardData.popularItems.length - 1 && <Divider />}
+                    {index < popularItems.length - 1 && <Divider />}
                   </React.Fragment>
                 ))}
               </List>
-            </Paper>
-          </Grid>
-
-          {/* Ratings Distribution */}
-          <Grid item xs={12}>
-            <Paper sx={{ p: 2 }}>
-              <Typography variant="h6" gutterBottom>
-                Ratings Distribution
-              </Typography>
-              <Box sx={{ mt: 2 }}>
-                {dashboardData.ratings.distribution.map((rating) => (
-                  <Box key={rating.stars} sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                    <Box sx={{ minWidth: 45 }}>
-                      <Typography variant="body2">
-                        {rating.stars} stars
-                      </Typography>
-                    </Box>
-                    <Box sx={{ width: '100%', mx: 2 }}>
-                      <LinearProgress
-                        variant="determinate"
-                        value={(rating.count / dashboardData.ratings.total) * 100}
-                        sx={{ height: 8, borderRadius: 4 }}
-                      />
-                    </Box>
-                    <Box sx={{ minWidth: 35 }}>
-                      <Typography variant="body2" color="text.secondary">
-                        {rating.count}
-                      </Typography>
-                    </Box>
-                  </Box>
-                ))}
-              </Box>
             </Paper>
           </Grid>
         </Grid>
