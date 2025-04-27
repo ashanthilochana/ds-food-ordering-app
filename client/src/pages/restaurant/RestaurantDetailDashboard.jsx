@@ -15,7 +15,18 @@ import {
   Chip,
   CircularProgress,
   Rating,
-  LinearProgress
+  LinearProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Snackbar,
+  Alert,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem
 } from '@mui/material';
 import {
   RestaurantMenu as MenuIcon,
@@ -29,6 +40,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import Layout from '../../components/layout/Layout';
+import { restaurantService } from '../../services/restaurantService';
 
 // Mock data - replace with API calls
 const getMockRestaurantData = (restaurantId) => ({
@@ -87,11 +99,24 @@ const RestaurantDetailDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState(null);
   const navigate = useNavigate();
+  const [editOpen, setEditOpen] = useState(false);
+  const [editForm, setEditForm] = useState(null);
+  const [editLoading, setEditLoading] = useState(false);
+  const [editError, setEditError] = useState('');
+  const [editSuccess, setEditSuccess] = useState(false);
 
   useEffect(() => {
     // Simulate API call
     setTimeout(() => {
-      setDashboardData(getMockRestaurantData(restaurantId));
+      const data = getMockRestaurantData(restaurantId);
+      setDashboardData(data);
+      setEditForm({
+        name: data.restaurant.name,
+        description: '', // Add description if available in real data
+        address: { street: data.restaurant.address, city: '', zip: '' },
+        cuisine: [data.restaurant.cuisine],
+        priceRange: '', // Add priceRange if available in real data
+      });
       setLoading(false);
     }, 1000);
   }, [restaurantId]);
@@ -167,6 +192,13 @@ const RestaurantDetailDashboard = () => {
               onClick={handleRefresh}
             >
               Refresh
+            </Button>
+            <Button
+              variant="outlined"
+              color="primary"
+              onClick={() => setEditOpen(true)}
+            >
+              Edit Restaurant
             </Button>
           </Box>
         </Box>
@@ -372,6 +404,133 @@ const RestaurantDetailDashboard = () => {
             </Paper>
           </Grid>
         </Grid>
+
+        <Dialog open={editOpen} onClose={() => setEditOpen(false)} maxWidth="sm" fullWidth>
+          <DialogTitle>Edit Restaurant</DialogTitle>
+          <DialogContent>
+            {editForm && (
+              <Box component="form" sx={{ mt: 1 }}>
+                <TextField
+                  required
+                  fullWidth
+                  label="Restaurant Name"
+                  name="name"
+                  value={editForm.name}
+                  onChange={e => setEditForm(prev => ({ ...prev, name: e.target.value }))}
+                  sx={{ mb: 2 }}
+                />
+                <TextField
+                  required
+                  fullWidth
+                  label="Description"
+                  name="description"
+                  value={editForm.description}
+                  onChange={e => setEditForm(prev => ({ ...prev, description: e.target.value }))}
+                  sx={{ mb: 2 }}
+                />
+                <TextField
+                  required
+                  fullWidth
+                  label="Street"
+                  name="street"
+                  value={editForm.address.street}
+                  onChange={e => setEditForm(prev => ({ ...prev, address: { ...prev.address, street: e.target.value } }))}
+                  sx={{ mb: 2 }}
+                />
+                <TextField
+                  required
+                  fullWidth
+                  label="City"
+                  name="city"
+                  value={editForm.address.city}
+                  onChange={e => setEditForm(prev => ({ ...prev, address: { ...prev.address, city: e.target.value } }))}
+                  sx={{ mb: 2 }}
+                />
+                <TextField
+                  required
+                  fullWidth
+                  label="Zip"
+                  name="zip"
+                  value={editForm.address.zip}
+                  onChange={e => setEditForm(prev => ({ ...prev, address: { ...prev.address, zip: e.target.value } }))}
+                  sx={{ mb: 2 }}
+                />
+                <FormControl fullWidth required sx={{ mb: 2 }}>
+                  <InputLabel>Price Range</InputLabel>
+                  <Select
+                    name="priceRange"
+                    value={editForm.priceRange}
+                    label="Price Range"
+                    onChange={e => setEditForm(prev => ({ ...prev, priceRange: e.target.value }))}
+                  >
+                    <MenuItem value="budget">Budget</MenuItem>
+                    <MenuItem value="moderate">Moderate</MenuItem>
+                    <MenuItem value="expensive">Expensive</MenuItem>
+                    <MenuItem value="luxury">Luxury</MenuItem>
+                  </Select>
+                </FormControl>
+                <TextField
+                  required
+                  fullWidth
+                  label="Cuisines (comma separated)"
+                  name="cuisine"
+                  value={editForm.cuisine.join(', ')}
+                  onChange={e => setEditForm(prev => ({ ...prev, cuisine: e.target.value.split(',').map(c => c.trim()).filter(Boolean) }))}
+                  placeholder="e.g., Indian, Chinese"
+                />
+              </Box>
+            )}
+            {editError && <Alert severity="error" sx={{ mt: 2 }}>{editError}</Alert>}
+            {editSuccess && <Alert severity="success" sx={{ mt: 2 }}>Restaurant updated successfully!</Alert>}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setEditOpen(false)} disabled={editLoading}>Cancel</Button>
+            <Button
+              variant="contained"
+              onClick={async () => {
+                setEditLoading(true);
+                setEditError('');
+                try {
+                  await restaurantService.updateRestaurant(
+                    dashboardData.restaurant.id,
+                    editForm
+                  );
+                  setEditSuccess(true);
+                  setTimeout(() => {
+                    setEditOpen(false);
+                    setEditSuccess(false);
+                    handleRefresh();
+                  }, 1200);
+                } catch (err) {
+                  setEditError('Failed to update restaurant. Please try again.');
+                } finally {
+                  setEditLoading(false);
+                }
+              }}
+              disabled={editLoading}
+            >
+              {editLoading ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+        <Snackbar
+          open={!!editError}
+          autoHideDuration={4000}
+          onClose={() => setEditError('')}
+        >
+          <Alert severity="error" onClose={() => setEditError('')}>
+            {editError}
+          </Alert>
+        </Snackbar>
+        <Snackbar
+          open={editSuccess}
+          autoHideDuration={2000}
+          onClose={() => setEditSuccess(false)}
+        >
+          <Alert severity="success" onClose={() => setEditSuccess(false)}>
+            Restaurant updated successfully!
+          </Alert>
+        </Snackbar>
       </Container>
     </Layout>
   );

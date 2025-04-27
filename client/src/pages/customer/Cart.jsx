@@ -69,7 +69,12 @@ const Cart = () => {
     // Fetch cart items from localStorage or context
     const savedCartItems = localStorage.getItem('cartItems');
     if (savedCartItems) {
+      try {
       setCartItems(JSON.parse(savedCartItems));
+      } catch (error) {
+        console.error('Error parsing cart items from cookie:', error);
+        setCartItems([]);
+      }
     }
   }, []);
 
