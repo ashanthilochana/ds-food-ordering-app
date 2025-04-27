@@ -8,118 +8,48 @@ import {
   Card,
   CardContent,
   Button,
-  IconButton,
-  List,
-  ListItem,
-  ListItemText,
-  Divider,
-  Chip,
   CircularProgress,
-  Stack,
-  Rating,
-  LinearProgress
+  Rating
 } from '@mui/material';
 import {
-  RestaurantMenu as MenuIcon,
-  ShoppingCart as OrderIcon,
-  TrendingUp as TrendingIcon,
-  AttachMoney as RevenueIcon,
-  Star as StarIcon,
-  Schedule as TimeIcon,
-  Refresh as RefreshIcon
+  Add as AddIcon,
+  Restaurant as RestaurantIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../../components/layout/Layout';
 
 // Mock data - replace with API calls
-const mockDashboardData = {
-  todayStats: {
-    orders: 24,
-    revenue: 856.50,
-    avgOrderValue: 35.69,
-    avgPrepTime: 22
+const mockRestaurants = [
+  {
+    id: 1,
+    name: 'Pizza Palace',
+    cuisine: 'Italian',
+    address: '123 Main St',
+    rating: 4.5,
+    status: 'active'
   },
-  recentOrders: [
-    {
-      id: '12345',
-      customerName: 'John Doe',
-      items: ['2x Margherita Pizza', '1x Garlic Bread'],
-      total: 42.98,
-      status: 'preparing',
-      time: '10 mins ago'
-    },
-    {
-      id: '12344',
-      customerName: 'Jane Smith',
-      items: ['1x Pepperoni Pizza', '2x Coke'],
-      total: 28.97,
-      status: 'ready',
-      time: '15 mins ago'
-    },
-    {
-      id: '12343',
-      customerName: 'Mike Johnson',
-      items: ['1x Supreme Pizza', '1x Wings'],
-      total: 35.96,
-      status: 'delivered',
-      time: '25 mins ago'
-    }
-  ],
-  popularItems: [
-    { name: 'Margherita Pizza', orders: 158, rating: 4.8 },
-    { name: 'Pepperoni Pizza', orders: 142, rating: 4.7 },
-    { name: 'Garlic Bread', orders: 97, rating: 4.5 },
-    { name: 'Supreme Pizza', orders: 89, rating: 4.6 }
-  ],
-  ratings: {
-    average: 4.6,
-    total: 253,
-    distribution: [
-      { stars: 5, count: 150 },
-      { stars: 4, count: 80 },
-      { stars: 3, count: 15 },
-      { stars: 2, count: 5 },
-      { stars: 1, count: 3 }
-    ]
+  {
+    id: 2,
+    name: 'Burger Hub',
+    cuisine: 'American',
+    address: '456 Oak Ave',
+    rating: 4.2,
+    status: 'active'
   }
-};
+];
 
 const RestaurantDashboard = () => {
   const [loading, setLoading] = useState(true);
-  const [dashboardData, setDashboardData] = useState(null);
+  const [restaurants, setRestaurants] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
     // Simulate API call
     setTimeout(() => {
-      setDashboardData(mockDashboardData);
+      setRestaurants(mockRestaurants);
       setLoading(false);
     }, 1000);
   }, []);
-
-  const handleRefresh = () => {
-    setLoading(true);
-    // Simulate API refresh
-    setTimeout(() => {
-      setDashboardData(mockDashboardData);
-      setLoading(false);
-    }, 1000);
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'preparing':
-        return 'warning';
-      case 'ready':
-        return 'info';
-      case 'delivered':
-        return 'success';
-      case 'cancelled':
-        return 'error';
-      default:
-        return 'default';
-    }
-  };
 
   if (loading) {
     return (
@@ -134,221 +64,58 @@ const RestaurantDashboard = () => {
   return (
     <Layout>
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-        {/* Header */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Typography variant="h4" component="h1">
-            Restaurant Dashboard
-          </Typography>
-          <Button
-            variant="outlined"
-            startIcon={<RefreshIcon />}
-            onClick={handleRefresh}
-          >
-            Refresh
-          </Button>
-        </Box>
-
-        {/* Quick Stats */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent>
-                <Typography color="text.secondary" gutterBottom>
-                  Today's Orders
-                </Typography>
-                <Typography variant="h4" component="div">
-                  {dashboardData.todayStats.orders}
-                </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                  <OrderIcon color="primary" sx={{ mr: 1 }} />
-                  <Typography variant="body2" color="text.secondary">
-                    Active orders
-                  </Typography>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent>
-                <Typography color="text.secondary" gutterBottom>
-                  Today's Revenue
-                </Typography>
-                <Typography variant="h4" component="div">
-                  ${dashboardData.todayStats.revenue.toFixed(2)}
-                </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                  <RevenueIcon color="success" sx={{ mr: 1 }} />
-                  <Typography variant="body2" color="text.secondary">
-                    ${dashboardData.todayStats.avgOrderValue.toFixed(2)} avg. order
-                  </Typography>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent>
-                <Typography color="text.secondary" gutterBottom>
-                  Avg. Prep Time
-                </Typography>
-                <Typography variant="h4" component="div">
-                  {dashboardData.todayStats.avgPrepTime}m
-                </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                  <TimeIcon color="warning" sx={{ mr: 1 }} />
-                  <Typography variant="body2" color="text.secondary">
-                    Minutes per order
-                  </Typography>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent>
-                <Typography color="text.secondary" gutterBottom>
-                  Rating
-                </Typography>
-                <Typography variant="h4" component="div">
-                  {dashboardData.ratings.average}
-                </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                  <StarIcon color="primary" sx={{ mr: 1 }} />
-                  <Typography variant="body2" color="text.secondary">
-                    {dashboardData.ratings.total} reviews
-                  </Typography>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-
-        <Grid container spacing={3}>
-          {/* Recent Orders */}
-          <Grid item xs={12} md={6}>
-            <Paper sx={{ p: 2, height: '100%' }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h6">Recent Orders</Typography>
-                <Button 
-                  variant="text" 
-                  onClick={() => navigate('/restaurant-orders')}
+        {/* Restaurant Management Section */}
+        <Paper sx={{ p: 3 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Typography variant="h5">
+              My Restaurants
+            </Typography>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => navigate('/add-restaurant')}
+            >
+              Add New Restaurant
+            </Button>
+          </Box>
+          <Grid container spacing={3}>
+            {restaurants.map((restaurant) => (
+              <Grid item xs={12} sm={6} md={4} key={restaurant.id}>
+                <Card 
+                  sx={{ 
+                    height: '100%',
+                    cursor: 'pointer',
+                    '&:hover': {
+                      boxShadow: 6
+                    }
+                  }}
+                  onClick={() => navigate(`/restaurant-dashboard/${restaurant.id}`)}
                 >
-                  View All
-                </Button>
-              </Box>
-              <List>
-                {dashboardData.recentOrders.map((order, index) => (
-                  <React.Fragment key={order.id}>
-                    <ListItem
-                      sx={{ px: 0, py: 2 }}
-                      secondaryAction={
-                        <Chip 
-                          label={order.status}
-                          color={getStatusColor(order.status)}
-                          size="small"
-                        />
-                      }
-                    >
-                      <ListItemText
-                        primary={
-                          <Typography variant="subtitle2">
-                            Order #{order.id} - {order.customerName}
-                          </Typography>
-                        }
-                        secondary={
-                          <>
-                            <Typography variant="body2" color="text.secondary">
-                              {order.items.join(', ')}
-                            </Typography>
-                            <Typography variant="body2">
-                              ${order.total.toFixed(2)} • {order.time}
-                            </Typography>
-                          </>
-                        }
-                      />
-                    </ListItem>
-                    {index < dashboardData.recentOrders.length - 1 && <Divider />}
-                  </React.Fragment>
-                ))}
-              </List>
-            </Paper>
-          </Grid>
-
-          {/* Popular Items */}
-          <Grid item xs={12} md={6}>
-            <Paper sx={{ p: 2, height: '100%' }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h6">Popular Items</Typography>
-                <Button 
-                  variant="text" 
-                  onClick={() => navigate('/menu-management')}
-                >
-                  Manage Menu
-                </Button>
-              </Box>
-              <List>
-                {dashboardData.popularItems.map((item, index) => (
-                  <React.Fragment key={item.name}>
-                    <ListItem sx={{ px: 0, py: 2 }}>
-                      <ListItemText
-                        primary={
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <Typography variant="subtitle2">{item.name}</Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              {item.orders} orders
-                            </Typography>
-                          </Box>
-                        }
-                        secondary={
-                          <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
-                            <Rating value={item.rating} precision={0.1} size="small" readOnly />
-                            <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-                              {item.rating}
-                            </Typography>
-                          </Box>
-                        }
-                      />
-                    </ListItem>
-                    {index < dashboardData.popularItems.length - 1 && <Divider />}
-                  </React.Fragment>
-                ))}
-              </List>
-            </Paper>
-          </Grid>
-
-          {/* Ratings Distribution */}
-          <Grid item xs={12}>
-            <Paper sx={{ p: 2 }}>
-              <Typography variant="h6" gutterBottom>
-                Ratings Distribution
-              </Typography>
-              <Box sx={{ mt: 2 }}>
-                {dashboardData.ratings.distribution.map((rating) => (
-                  <Box key={rating.stars} sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                    <Box sx={{ minWidth: 45 }}>
-                      <Typography variant="body2">
-                        {rating.stars} stars
+                  <CardContent>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                      <RestaurantIcon color="primary" sx={{ mr: 1 }} />
+                      <Typography variant="h6" component="div">
+                        {restaurant.name}
                       </Typography>
                     </Box>
-                    <Box sx={{ width: '100%', mx: 2 }}>
-                      <LinearProgress
-                        variant="determinate"
-                        value={(rating.count / dashboardData.ratings.total) * 100}
-                        sx={{ height: 8, borderRadius: 4 }}
-                      />
-                    </Box>
-                    <Box sx={{ minWidth: 35 }}>
-                      <Typography variant="body2" color="text.secondary">
-                        {rating.count}
+                    <Typography color="text.secondary" gutterBottom>
+                      {restaurant.cuisine}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" paragraph>
+                      {restaurant.address}
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <Rating value={restaurant.rating} precision={0.5} size="small" readOnly />
+                      <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
+                        {restaurant.rating}
                       </Typography>
                     </Box>
-                  </Box>
-                ))}
-              </Box>
-            </Paper>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
           </Grid>
-        </Grid>
+        </Paper>
       </Container>
     </Layout>
   );

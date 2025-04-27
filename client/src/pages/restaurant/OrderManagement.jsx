@@ -36,8 +36,10 @@ import {
   AccessTime as TimeIcon,
   Person as PersonIcon,
   Phone as PhoneIcon,
-  MoreVert as MoreIcon
+  MoreVert as MoreIcon,
+  ArrowBack as BackIcon
 } from '@mui/icons-material';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Layout from '../../components/layout/Layout';
 
 // Mock data for orders
@@ -148,6 +150,9 @@ const mockOrders = [
 ];
 
 const OrderManagement = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const restaurantId = new URLSearchParams(location.search).get('restaurantId');
   const [loading, setLoading] = useState(true);
   const [orders, setOrders] = useState([]);
   const [tabValue, setTabValue] = useState(0);
@@ -329,9 +334,17 @@ const OrderManagement = () => {
       <Container>
         <Box sx={{ my: 4 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-            <Typography variant="h4" component="h1">
-              Order Management
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Button
+                startIcon={<BackIcon />}
+                onClick={() => navigate(`/restaurant-dashboard/${restaurantId}`)}
+              >
+                Back to Dashboard
+              </Button>
+              <Typography variant="h4" component="h1">
+                Order Management
+              </Typography>
+            </Box>
             <Button
               variant="outlined"
               startIcon={<RefreshIcon />}

@@ -14,6 +14,8 @@ import TrackOrder from './pages/customer/TrackOrder';
 // Restaurant admin routes
 import MenuManagement from './pages/restaurant/MenuManagement';
 import OrderManagement from './pages/restaurant/OrderManagement';
+import AddRestaurant from './pages/restaurant/AddRestaurant';
+import RestaurantDetailDashboard from './pages/restaurant/RestaurantDetailDashboard';
 
 function App() {
   return (
@@ -36,6 +38,8 @@ function App() {
       {/* Restaurant Admin Routes */}
       <Route path="/menu-management" element={<MenuManagement />} />
       <Route path="/restaurant-orders" element={<OrderManagement />} />
+      <Route path="/add-restaurant" element={<AddRestaurant />} />
+      <Route path="/restaurant-dashboard/:restaurantId" element={<RestaurantDetailDashboard />} />
     </Routes>
   );
 }

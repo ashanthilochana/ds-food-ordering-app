@@ -35,6 +35,10 @@ import {
 } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '../../components/layout/Layout';
+import Cookies from 'js-cookie';
+
+const CART_COOKIE_NAME = 'cartItems';
+const CART_EXPIRY_DAYS = 7;
 
 // Mock data - replace with API call
 const mockRestaurant = {
@@ -260,7 +264,15 @@ const RestaurantDetail = () => {
       total: calculateItemTotal()
     };
     
-    setCartItems([...cartItems, newItem]);
+    const updatedCartItems = [...cartItems, newItem];
+    setCartItems(updatedCartItems);
+    
+    // Save to cookie
+    Cookies.set(CART_COOKIE_NAME, JSON.stringify(updatedCartItems), {
+      expires: CART_EXPIRY_DAYS,
+      path: '/'
+    });
+    
     setSnackbarOpen(true);
     closeItemDialog();
   };
@@ -282,9 +294,18 @@ const RestaurantDetail = () => {
   };
 
   const goToCart = () => {
-    // In a real app, you'd save the cart to context/state/localStorage
-    localStorage.setItem('cartItems', JSON.stringify(cartItems));
-    localStorage.setItem('restaurantId', restaurant.id);
+    // Save the cart to cookie
+    Cookies.set(CART_COOKIE_NAME, JSON.stringify(cartItems), {
+      expires: CART_EXPIRY_DAYS,
+      path: '/'
+    });
+    
+    // Save restaurant ID to cookie
+    Cookies.set('restaurantId', restaurant.id, {
+      expires: CART_EXPIRY_DAYS,
+      path: '/'
+    });
+    
     navigate('/cart');
   };
 

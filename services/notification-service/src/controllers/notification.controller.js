@@ -3,7 +3,7 @@ const { sendEmail } = require('../services/email.service');
 const { sendSMS } = require('../services/sms.service');
 const { sendNotification: sendSocketNotification } = require('../services/socket.service');
 
-exports.createNotification = async (notificationData) => {
+const createNotificationInternal = async (notificationData) => {
   try {
     const notification = new Notification(notificationData);
     await notification.save();
@@ -59,14 +59,25 @@ exports.createNotification = async (notificationData) => {
   }
 };
 
+exports.createNotification = createNotificationInternal;
+
+exports.createNotificationEndpoint = async (req, res) => {
+  try {
+    const notification = await createNotificationInternal(req.body);
+    res.status(201).json(notification);
+  } catch (error) {
+    console.error('Error creating notification:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
 exports.getUserNotifications = async (req, res) => {
   try {
+    const userId = req.user.id;
     const { page = 1, limit = 10, status } = req.query;
-    const query = { userId: req.user._id };
+    const query = { userId };
     
-    if (status) {
-      query.status = status;
-    }
+    if (status) query.status = status;
 
     const notifications = await Notification.find(query)
       .sort({ createdAt: -1 })
@@ -90,7 +101,7 @@ exports.markAsRead = async (req, res) => {
   try {
     const notification = await Notification.findOne({
       _id: req.params.id,
-      userId: req.user._id
+      userId: req.user.id
     });
 
     if (!notification) {
@@ -110,7 +121,7 @@ exports.deleteNotification = async (req, res) => {
   try {
     const notification = await Notification.findOneAndDelete({
       _id: req.params.id,
-      userId: req.user._id
+      userId: req.user.id
     });
 
     if (!notification) {
