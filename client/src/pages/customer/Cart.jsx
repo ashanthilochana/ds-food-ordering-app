@@ -74,7 +74,7 @@ const Cart = () => {
     const savedCartItems = Cookies.get(CART_COOKIE_NAME);
     if (savedCartItems) {
       try {
-      setCartItems(JSON.parse(savedCartItems));
+        setCartItems(JSON.parse(savedCartItems));
       } catch (error) {
         console.error('Error parsing cart items from cookie:', error);
         setCartItems([]);

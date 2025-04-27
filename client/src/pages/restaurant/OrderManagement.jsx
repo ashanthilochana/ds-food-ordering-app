@@ -341,9 +341,9 @@ const OrderManagement = () => {
               >
                 Back to Dashboard
               </Button>
-            <Typography variant="h4" component="h1">
-              Order Management
-            </Typography>
+              <Typography variant="h4" component="h1">
+                Order Management
+              </Typography>
             </Box>
             <Button
               variant="outlined"

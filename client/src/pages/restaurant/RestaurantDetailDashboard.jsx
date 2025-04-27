@@ -15,7 +15,18 @@ import {
   Chip,
   CircularProgress,
   Rating,
-  LinearProgress
+  LinearProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Snackbar,
+  Alert,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem
 } from '@mui/material';
 import {
   RestaurantMenu as MenuIcon,
@@ -29,80 +40,71 @@ import {
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import Layout from '../../components/layout/Layout';
-
-// Mock data - replace with API calls
-const getMockRestaurantData = (restaurantId) => ({
-  restaurant: {
-    id: restaurantId,
-    name: 'Pizza Palace',
-    cuisine: 'Italian',
-    address: '123 Main St',
-    rating: 4.5,
-    status: 'active'
-  },
-  todayStats: {
-    orders: 24,
-    revenue: 856.50,
-    avgOrderValue: 35.69,
-    avgPrepTime: 22
-  },
-  recentOrders: [
-    {
-      id: '12345',
-      customerName: 'John Doe',
-      items: ['2x Margherita Pizza', '1x Garlic Bread'],
-      total: 42.98,
-      status: 'preparing',
-      time: '10 mins ago'
-    },
-    {
-      id: '12344',
-      customerName: 'Jane Smith',
-      items: ['1x Pepperoni Pizza', '2x Coke'],
-      total: 28.97,
-      status: 'ready',
-      time: '15 mins ago'
-    }
-  ],
-  popularItems: [
-    { name: 'Margherita Pizza', orders: 158, rating: 4.8 },
-    { name: 'Pepperoni Pizza', orders: 142, rating: 4.7 },
-    { name: 'Garlic Bread', orders: 97, rating: 4.5 }
-  ],
-  ratings: {
-    average: 4.6,
-    total: 253,
-    distribution: [
-      { stars: 5, count: 150 },
-      { stars: 4, count: 80 },
-      { stars: 3, count: 15 },
-      { stars: 2, count: 5 },
-      { stars: 1, count: 3 }
-    ]
-  }
-});
+import { restaurantService } from '../../services/restaurantService';
 
 const RestaurantDetailDashboard = () => {
   const { restaurantId } = useParams();
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState(null);
   const navigate = useNavigate();
+  const [editOpen, setEditOpen] = useState(false);
+  const [editForm, setEditForm] = useState(null);
+  const [editLoading, setEditLoading] = useState(false);
+  const [editError, setEditError] = useState('');
+  const [editSuccess, setEditSuccess] = useState(false);
 
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setDashboardData(getMockRestaurantData(restaurantId));
-      setLoading(false);
-    }, 1000);
+    const fetchRestaurantData = async () => {
+      try {
+        setLoading(true);
+        const data = await restaurantService.getRestaurantById(restaurantId);
+        setDashboardData({
+          restaurant: data,
+          stats: {
+            orders: data.orders || [],
+            revenue: data.revenue || 0,
+            rating: data.rating || 0
+          }
+        });
+        setEditForm({
+          name: data.name,
+          description: data.description || '',
+          address: data.address || { street: '', city: '', zip: '' },
+          cuisine: data.cuisine || [],
+          priceRange: data.priceRange || '',
+        });
+      } catch (error) {
+        console.error('Error fetching restaurant:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (restaurantId) {
+      fetchRestaurantData();
+    }
   }, [restaurantId]);
 
   const handleRefresh = () => {
     setLoading(true);
-    // Simulate API refresh
-    setTimeout(() => {
-      setDashboardData(getMockRestaurantData(restaurantId));
-      setLoading(false);
-    }, 1000);
+    const fetchRestaurantData = async () => {
+      try {
+        const data = await restaurantService.getRestaurantById(restaurantId);
+        setDashboardData({
+          restaurant: data,
+          stats: {
+            orders: data.orders || [],
+            revenue: data.revenue || 0,
+            rating: data.rating || 0
+          }
+        });
+      } catch (error) {
+        console.error('Error fetching restaurant:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchRestaurantData();
   };
 
   const getStatusColor = (status) => {
@@ -168,6 +170,13 @@ const RestaurantDetailDashboard = () => {
             >
               Refresh
             </Button>
+            <Button
+              variant="outlined"
+              color="primary"
+              onClick={() => setEditOpen(true)}
+            >
+              Edit Restaurant
+            </Button>
           </Box>
         </Box>
 
@@ -180,7 +189,7 @@ const RestaurantDetailDashboard = () => {
                   Today's Orders
                 </Typography>
                 <Typography variant="h4" component="div">
-                  {dashboardData.todayStats.orders}
+                  {dashboardData.stats.orders.length}
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
                   <OrderIcon color="primary" sx={{ mr: 1 }} />
@@ -198,12 +207,12 @@ const RestaurantDetailDashboard = () => {
                   Today's Revenue
                 </Typography>
                 <Typography variant="h4" component="div">
-                  ${dashboardData.todayStats.revenue.toFixed(2)}
+                  ${dashboardData.stats.revenue.toFixed(2)}
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
                   <RevenueIcon color="success" sx={{ mr: 1 }} />
                   <Typography variant="body2" color="text.secondary">
-                    ${dashboardData.todayStats.avgOrderValue.toFixed(2)} avg. order
+                    ${dashboardData.stats.revenue.toFixed(2)} avg. order
                   </Typography>
                 </Box>
               </CardContent>
@@ -216,7 +225,7 @@ const RestaurantDetailDashboard = () => {
                   Avg. Prep Time
                 </Typography>
                 <Typography variant="h4" component="div">
-                  {dashboardData.todayStats.avgPrepTime}m
+                  22m
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
                   <TimeIcon color="warning" sx={{ mr: 1 }} />
@@ -234,12 +243,12 @@ const RestaurantDetailDashboard = () => {
                   Rating
                 </Typography>
                 <Typography variant="h4" component="div">
-                  {dashboardData.ratings.average}
+                  {dashboardData.stats.rating}
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
                   <StarIcon color="primary" sx={{ mr: 1 }} />
                   <Typography variant="body2" color="text.secondary">
-                    {dashboardData.ratings.total} reviews
+                    {dashboardData.stats.rating} reviews
                   </Typography>
                 </Box>
               </CardContent>
@@ -261,7 +270,7 @@ const RestaurantDetailDashboard = () => {
                 </Button>
               </Box>
               <List>
-                {dashboardData.recentOrders.map((order, index) => (
+                {dashboardData.stats.orders.map((order, index) => (
                   <React.Fragment key={order.id}>
                     <ListItem
                       sx={{ px: 0, py: 2 }}
@@ -291,7 +300,7 @@ const RestaurantDetailDashboard = () => {
                         }
                       />
                     </ListItem>
-                    {index < dashboardData.recentOrders.length - 1 && <Divider />}
+                    {index < dashboardData.stats.orders.length - 1 && <Divider />}
                   </React.Fragment>
                 ))}
               </List>
@@ -311,7 +320,7 @@ const RestaurantDetailDashboard = () => {
                 </Button>
               </Box>
               <List>
-                {dashboardData.popularItems.map((item, index) => (
+                {dashboardData.restaurant.menu.map((item, index) => (
                   <React.Fragment key={item.name}>
                     <ListItem sx={{ px: 0, py: 2 }}>
                       <ListItemText
@@ -333,7 +342,7 @@ const RestaurantDetailDashboard = () => {
                         }
                       />
                     </ListItem>
-                    {index < dashboardData.popularItems.length - 1 && <Divider />}
+                    {index < dashboardData.restaurant.menu.length - 1 && <Divider />}
                   </React.Fragment>
                 ))}
               </List>
@@ -347,7 +356,7 @@ const RestaurantDetailDashboard = () => {
                 Ratings Distribution
               </Typography>
               <Box sx={{ mt: 2 }}>
-                {dashboardData.ratings.distribution.map((rating) => (
+                {dashboardData.restaurant.ratings.distribution.map((rating) => (
                   <Box key={rating.stars} sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                     <Box sx={{ minWidth: 45 }}>
                       <Typography variant="body2">
@@ -357,7 +366,7 @@ const RestaurantDetailDashboard = () => {
                     <Box sx={{ width: '100%', mx: 2 }}>
                       <LinearProgress
                         variant="determinate"
-                        value={(rating.count / dashboardData.ratings.total) * 100}
+                        value={(rating.count / dashboardData.restaurant.ratings.total) * 100}
                         sx={{ height: 8, borderRadius: 4 }}
                       />
                     </Box>
@@ -372,6 +381,133 @@ const RestaurantDetailDashboard = () => {
             </Paper>
           </Grid>
         </Grid>
+
+        <Dialog open={editOpen} onClose={() => setEditOpen(false)} maxWidth="sm" fullWidth>
+          <DialogTitle>Edit Restaurant</DialogTitle>
+          <DialogContent>
+            {editForm && (
+              <Box component="form" sx={{ mt: 1 }}>
+                <TextField
+                  required
+                  fullWidth
+                  label="Restaurant Name"
+                  name="name"
+                  value={editForm.name}
+                  onChange={e => setEditForm(prev => ({ ...prev, name: e.target.value }))}
+                  sx={{ mb: 2 }}
+                />
+                <TextField
+                  required
+                  fullWidth
+                  label="Description"
+                  name="description"
+                  value={editForm.description}
+                  onChange={e => setEditForm(prev => ({ ...prev, description: e.target.value }))}
+                  sx={{ mb: 2 }}
+                />
+                <TextField
+                  required
+                  fullWidth
+                  label="Street"
+                  name="street"
+                  value={editForm.address.street}
+                  onChange={e => setEditForm(prev => ({ ...prev, address: { ...prev.address, street: e.target.value } }))}
+                  sx={{ mb: 2 }}
+                />
+                <TextField
+                  required
+                  fullWidth
+                  label="City"
+                  name="city"
+                  value={editForm.address.city}
+                  onChange={e => setEditForm(prev => ({ ...prev, address: { ...prev.address, city: e.target.value } }))}
+                  sx={{ mb: 2 }}
+                />
+                <TextField
+                  required
+                  fullWidth
+                  label="Zip"
+                  name="zip"
+                  value={editForm.address.zip}
+                  onChange={e => setEditForm(prev => ({ ...prev, address: { ...prev.address, zip: e.target.value } }))}
+                  sx={{ mb: 2 }}
+                />
+                <FormControl fullWidth required sx={{ mb: 2 }}>
+                  <InputLabel>Price Range</InputLabel>
+                  <Select
+                    name="priceRange"
+                    value={editForm.priceRange}
+                    label="Price Range"
+                    onChange={e => setEditForm(prev => ({ ...prev, priceRange: e.target.value }))}
+                  >
+                    <MenuItem value="budget">Budget</MenuItem>
+                    <MenuItem value="moderate">Moderate</MenuItem>
+                    <MenuItem value="expensive">Expensive</MenuItem>
+                    <MenuItem value="luxury">Luxury</MenuItem>
+                  </Select>
+                </FormControl>
+                <TextField
+                  required
+                  fullWidth
+                  label="Cuisines (comma separated)"
+                  name="cuisine"
+                  value={editForm.cuisine.join(', ')}
+                  onChange={e => setEditForm(prev => ({ ...prev, cuisine: e.target.value.split(',').map(c => c.trim()).filter(Boolean) }))}
+                  placeholder="e.g., Indian, Chinese"
+                />
+              </Box>
+            )}
+            {editError && <Alert severity="error" sx={{ mt: 2 }}>{editError}</Alert>}
+            {editSuccess && <Alert severity="success" sx={{ mt: 2 }}>Restaurant updated successfully!</Alert>}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setEditOpen(false)} disabled={editLoading}>Cancel</Button>
+            <Button
+              variant="contained"
+              onClick={async () => {
+                setEditLoading(true);
+                setEditError('');
+                try {
+                  await restaurantService.updateRestaurant(
+                    dashboardData.restaurant.id,
+                    editForm
+                  );
+                  setEditSuccess(true);
+                  setTimeout(() => {
+                    setEditOpen(false);
+                    setEditSuccess(false);
+                    handleRefresh();
+                  }, 1200);
+                } catch (err) {
+                  setEditError('Failed to update restaurant. Please try again.');
+                } finally {
+                  setEditLoading(false);
+                }
+              }}
+              disabled={editLoading}
+            >
+              {editLoading ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+        <Snackbar
+          open={!!editError}
+          autoHideDuration={4000}
+          onClose={() => setEditError('')}
+        >
+          <Alert severity="error" onClose={() => setEditError('')}>
+            {editError}
+          </Alert>
+        </Snackbar>
+        <Snackbar
+          open={editSuccess}
+          autoHideDuration={2000}
+          onClose={() => setEditSuccess(false)}
+        >
+          <Alert severity="success" onClose={() => setEditSuccess(false)}>
+            Restaurant updated successfully!
+          </Alert>
+        </Snackbar>
       </Container>
     </Layout>
   );

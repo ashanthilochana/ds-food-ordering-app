@@ -59,6 +59,20 @@ router.get('/', restaurantController.getRestaurants);
 
 /**
  * @swagger
+ * /api/restaurants/my-restaurants:
+ *   get:
+ *     summary: Get all restaurants for the logged-in owner
+ *     tags: [Restaurants]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of restaurants for the logged-in owner
+ */
+router.get('/my-restaurants', auth, isRestaurantOwner, restaurantController.getRestaurantsByOwner);
+
+/**
+ * @swagger
  * /api/restaurants/{id}:
  *   get:
  *     summary: Get restaurant by ID
