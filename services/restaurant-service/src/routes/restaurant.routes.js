@@ -154,4 +154,21 @@ router.delete('/:id', auth, restaurantController.deleteRestaurant);
  */
 router.patch('/:id/toggle-status', auth, restaurantController.toggleRestaurantStatus);
 
+/**
+ * @swagger
+ * /api/restaurants/my-restaurants:
+ *   get:
+ *     summary: Get all restaurants for the logged-in owner
+ *     tags: [Restaurants]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of restaurants for the logged-in owner
+ */
+router.get('/my-restaurants', (req, res, next) => {
+  console.log('Route hit');
+  next();
+}, auth, isRestaurantOwner, restaurantController.getRestaurantsByOwner);
+
 module.exports = router;

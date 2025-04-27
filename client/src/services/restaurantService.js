@@ -5,8 +5,10 @@ const API_URL = 'http://localhost:3001/api/restaurants';
 function getAuthHeader() {
   const user = JSON.parse(localStorage.getItem('user'));
   if (user && user.token) {
+    console.log('getAuthHeader: using token', user.token);
     return { Authorization: `Bearer ${user.token}` };
   }
+  console.log('getAuthHeader: no token found');
   return {};
 }
 
@@ -76,6 +78,18 @@ export const restaurantService = {
   toggleStatus: async (id) => {
     try {
       const response = await axios.patch(`${API_URL}/${id}/toggle-status`, {}, {
+        headers: { ...getAuthHeader() }
+      });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  // Get all restaurants for the logged-in owner
+  getMyRestaurants: async () => {
+    try {
+      const response = await axios.get(`${API_URL}/my-restaurants`, {
         headers: { ...getAuthHeader() }
       });
       return response.data;

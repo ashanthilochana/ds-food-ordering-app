@@ -9,7 +9,8 @@ import {
   CardContent,
   Button,
   CircularProgress,
-  Rating
+  Rating,
+  Alert
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -17,38 +18,28 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../../components/layout/Layout';
-
-// Mock data - replace with API calls
-const mockRestaurants = [
-  {
-    id: 1,
-    name: 'Pizza Palace',
-    cuisine: 'Italian',
-    address: '123 Main St',
-    rating: 4.5,
-    status: 'active'
-  },
-  {
-    id: 2,
-    name: 'Burger Hub',
-    cuisine: 'American',
-    address: '456 Oak Ave',
-    rating: 4.2,
-    status: 'active'
-  }
-];
+import { restaurantService } from '../../services/restaurantService';
 
 const RestaurantDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [restaurants, setRestaurants] = useState([]);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setRestaurants(mockRestaurants);
+    const fetchRestaurants = async () => {
+      setLoading(true);
+      setError('');
+      try {
+        const data = await restaurantService.getMyRestaurants();
+        setRestaurants(data);
+      } catch (err) {
+        setError('Failed to load restaurants.');
+        setRestaurants([]);
+      }
       setLoading(false);
-    }, 1000);
+    };
+    fetchRestaurants();
   }, []);
 
   if (loading) {
@@ -78,9 +69,17 @@ const RestaurantDashboard = () => {
               Add New Restaurant
             </Button>
           </Box>
+          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
           <Grid container spacing={3}>
+            {restaurants.length === 0 && !error && (
+              <Grid item xs={12}>
+                <Typography variant="body1" color="text.secondary">
+                  No restaurants found.
+                </Typography>
+              </Grid>
+            )}
             {restaurants.map((restaurant) => (
-              <Grid item xs={12} sm={6} md={4} key={restaurant.id}>
+              <Grid item xs={12} sm={6} md={4} key={restaurant._id || restaurant.id}>
                 <Card 
                   sx={{ 
                     height: '100%',
@@ -89,7 +88,7 @@ const RestaurantDashboard = () => {
                       boxShadow: 6
                     }
                   }}
-                  onClick={() => navigate(`/restaurant-dashboard/${restaurant.id}`)}
+                  onClick={() => navigate(`/restaurant-dashboard/${restaurant._id || restaurant.id}`)}
                 >
                   <CardContent>
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -99,15 +98,17 @@ const RestaurantDashboard = () => {
                       </Typography>
                     </Box>
                     <Typography color="text.secondary" gutterBottom>
-                      {restaurant.cuisine}
+                      {Array.isArray(restaurant.cuisine) ? restaurant.cuisine.join(', ') : restaurant.cuisine}
                     </Typography>
                     <Typography variant="body2" color="text.secondary" paragraph>
-                      {restaurant.address}
+                      {restaurant.address && typeof restaurant.address === 'object'
+                        ? [restaurant.address.street, restaurant.address.city, restaurant.address.zip].filter(Boolean).join(', ')
+                        : restaurant.address}
                     </Typography>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <Rating value={restaurant.rating} precision={0.5} size="small" readOnly />
+                      <Rating value={restaurant.rating || 0} precision={0.5} size="small" readOnly />
                       <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-                        {restaurant.rating}
+                        {restaurant.rating || 'N/A'}
                       </Typography>
                     </Box>
                   </CardContent>
