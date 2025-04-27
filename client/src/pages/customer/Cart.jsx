@@ -1,249 +1,732 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Container, Grid, Box, Typography, Card, CardMedia, CardContent,
-  Divider, Chip, Button, Rating, Tabs, Tab, CircularProgress, Dialog,
-  DialogTitle, DialogContent, DialogActions, IconButton, TextField, Snackbar, Alert
+  Container,
+  Box,
+  Typography,
+  Grid,
+  Paper,
+  Divider,
+  Button,
+  IconButton,
+  TextField,
+  List,
+  ListItem,
+  ListItemText,
+  FormControl,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  Step,
+  Stepper,
+  StepLabel,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Card,
+  CardContent,
+  CircularProgress,
+  Dialog,
+  DialogContent,
+  DialogActions,
+  Alert,
+  Snackbar
 } from '@mui/material';
 import {
-  AccessTime as TimeIcon, DeliveryDining as DeliveryIcon,
-  Close as CloseIcon, Add as AddIcon, Remove as RemoveIcon,
-  ShoppingCart as CartIcon
+  ArrowBack as ArrowBackIcon,
+  ShoppingCart as CartIcon,
+  Delete as DeleteIcon,
+  Add as AddIcon,
+  Remove as RemoveIcon,
+  ExpandMore as ExpandMoreIcon,
+  CreditCard as CreditCardIcon,
+  AccountBalance as BankIcon,
+  Money as CashIcon,
+  Check as CheckIcon
 } from '@mui/icons-material';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Layout from '../../components/layout/Layout';
 
-const mockRestaurant = { /* your mock data here */ };
-
-const RestaurantDetail = () => {
-  const { id } = useParams();
+const Cart = () => {
   const navigate = useNavigate();
-  const [restaurant, setRestaurant] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState(0);
-  const [selectedItem, setSelectedItem] = useState(null);
-  const [itemCount, setItemCount] = useState(1);
-  const [selectedOptions, setSelectedOptions] = useState({});
+  const [cartItems, setCartItems] = useState([]);
+  const [activeStep, setActiveStep] = useState(0);
+  const [paymentMethod, setPaymentMethod] = useState('creditCard');
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [orderSuccess, setOrderSuccess] = useState(false);
+  const [orderDetails, setOrderDetails] = useState(null);
+  const [deliveryAddress, setDeliveryAddress] = useState({
+    street: '',
+    city: '',
+    state: '',
+    zip: '',
+    instructions: ''
+  });
+  const [formErrors, setFormErrors] = useState({});
   const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
 
   useEffect(() => {
-    setTimeout(() => {
-      setRestaurant(mockRestaurant);
-      setLoading(false);
-    }, 1000);
-  }, [id]);
+    // Fetch cart items from localStorage or context
+    const savedCartItems = localStorage.getItem('cartItems');
+    if (savedCartItems) {
+      setCartItems(JSON.parse(savedCartItems));
+    }
+  }, []);
 
-  const handleTabChange = (event, newValue) => {
-    setActiveTab(newValue);
+  const handleQuantityChange = (itemId, change) => {
+    const updatedCartItems = cartItems.map(item => {
+      if (item.id === itemId) {
+        const newQuantity = item.quantity + change;
+        return {
+          ...item,
+          quantity: newQuantity > 0 ? newQuantity : 1,
+          total: (newQuantity > 0 ? newQuantity : 1) * (item.price)
+        };
+      }
+      return item;
+    });
+    
+    setCartItems(updatedCartItems);
+    localStorage.setItem('cartItems', JSON.stringify(updatedCartItems));
   };
 
-  const openItemDialog = (item) => {
-    setSelectedItem(item);
-    const initialOptions = {};
-    if (item.options) {
-      item.options.forEach(option => {
-        initialOptions[option.name] = option.choices[0];
+  const handleRemoveItem = (itemId) => {
+    const updatedCartItems = cartItems.filter(item => item.id !== itemId);
+    setCartItems(updatedCartItems);
+    localStorage.setItem('cartItems', JSON.stringify(updatedCartItems));
+    
+    if (updatedCartItems.length === 0) {
+      setSnackbarMessage('Your cart is empty!');
+      setSnackbarOpen(true);
+    }
+  };
+
+  const calculateSubtotal = () => {
+    return cartItems.reduce((total, item) => total + item.total, 0);
+  };
+
+  const calculateDeliveryFee = () => {
+    // Could be calculated based on distance, etc.
+    return 2.99;
+  };
+
+  const calculateTotal = () => {
+    return calculateSubtotal() + calculateDeliveryFee();
+  };
+
+  const handleAddressChange = (event) => {
+    const { name, value } = event.target;
+    setDeliveryAddress({
+      ...deliveryAddress,
+      [name]: value
+    });
+    
+    // Clear error for this field if it exists
+    if (formErrors[name]) {
+      setFormErrors({
+        ...formErrors,
+        [name]: ''
       });
     }
-    setSelectedOptions(initialOptions);
-    setItemCount(1);
   };
 
-  const closeItemDialog = () => {
-    setSelectedItem(null);
+  const validateDeliveryInfo = () => {
+    const errors = {};
+    if (!deliveryAddress.street.trim()) errors.street = 'Street address is required';
+    if (!deliveryAddress.city.trim()) errors.city = 'City is required';
+    if (!deliveryAddress.state.trim()) errors.state = 'State is required';
+    if (!deliveryAddress.zip.trim()) errors.zip = 'ZIP code is required';
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
-  const handleOptionChange = (optionName, value) => {
-    setSelectedOptions({ ...selectedOptions, [optionName]: value });
+  const handlePaymentChange = (event) => {
+    setPaymentMethod(event.target.value);
   };
 
-  const increaseItemCount = () => {
-    setItemCount(itemCount + 1);
-  };
-
-  const decreaseItemCount = () => {
-    if (itemCount > 1) {
-      setItemCount(itemCount - 1);
-    }
-  };
-
-  const calculateItemTotal = () => {
-    if (!selectedItem) return 0;
-    let total = selectedItem.price * itemCount;
-    Object.values(selectedOptions).forEach(option => {
-      const priceMatch = option.match(/\+\$(\d+(\.\d+)?)/);
-      if (priceMatch) {
-        total += parseFloat(priceMatch[1]) * itemCount;
+  const handleNext = () => {
+    if (activeStep === 0) {
+      if (cartItems.length === 0) {
+        setSnackbarMessage('Your cart is empty!');
+        setSnackbarOpen(true);
+        return;
       }
-    });
-    return total;
+    }
+    
+    if (activeStep === 1) {
+      if (!validateDeliveryInfo()) {
+        return;
+      }
+    }
+    
+    setActiveStep((prevStep) => prevStep + 1);
   };
 
-  const addToCart = () => {
-    const newItem = {
-      id: `${selectedItem.id}-${Date.now()}`,
-      menuItemId: selectedItem.id,
-      name: selectedItem.name,
-      price: selectedItem.price,
-      quantity: itemCount,
-      options: selectedOptions,
-      total: calculateItemTotal()
-    };
-
-    const existingCart = JSON.parse(localStorage.getItem('cartItems')) || [];
-    const updatedCart = [...existingCart, newItem];
-    localStorage.setItem('cartItems', JSON.stringify(updatedCart));
-    localStorage.setItem('restaurantId', restaurant.id);
-
-    setSnackbarOpen(true);
-    closeItemDialog();
+  const handleBack = () => {
+    setActiveStep((prevStep) => prevStep - 1);
   };
 
-  const goToCart = () => {
-    navigate('/cart');
+  const handlePlaceOrder = () => {
+    // Simulate payment processing
+    setIsProcessingPayment(true);
+    
+    setTimeout(() => {
+      setIsProcessingPayment(false);
+      setOrderSuccess(true);
+      
+      // Generate fake order details
+      const orderId = Math.floor(100000 + Math.random() * 900000);
+      const estimatedDeliveryTime = new Date();
+      estimatedDeliveryTime.setMinutes(estimatedDeliveryTime.getMinutes() + 45);
+      
+      setOrderDetails({
+        orderId: orderId,
+        estimatedDelivery: estimatedDeliveryTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        restaurant: 'Pizza Palace',
+        total: calculateTotal(),
+        deliveryAddress: `${deliveryAddress.street}, ${deliveryAddress.city}, ${deliveryAddress.state} ${deliveryAddress.zip}`
+      });
+      
+      // Clear cart
+      localStorage.removeItem('cartItems');
+    }, 2000);
   };
 
-  const handleCloseSnackbar = () => {
-    setSnackbarOpen(false);
+  const goToHome = () => {
+    navigate('/restaurants');
   };
 
-  if (loading) {
+  const goToOrderTracking = () => {
+    navigate(`/track-order/${orderDetails.orderId}`);
+  };
+
+  const steps = ['Cart', 'Delivery', 'Payment', 'Confirmation'];
+
+  if (cartItems.length === 0 && activeStep === 0) {
     return (
       <Layout>
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-          <CircularProgress />
-        </Box>
+        <Container>
+          <Box sx={{ my: 4, textAlign: 'center' }}>
+            <CartIcon sx={{ fontSize: 60, color: 'text.secondary', mb: 2 }} />
+            <Typography variant="h5" gutterBottom>
+              Your cart is empty
+            </Typography>
+            <Typography variant="body1" color="text.secondary" paragraph>
+              Looks like you haven't added any items to your cart yet.
+            </Typography>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={goToHome}
+              startIcon={<ArrowBackIcon />}
+            >
+              Browse Restaurants
+            </Button>
+          </Box>
+        </Container>
       </Layout>
     );
   }
 
   return (
     <Layout>
-      <Box>
-        {/* Header Image */}
-        <Box sx={{ position: 'relative', width: '100%', height: { xs: '150px', md: '250px' }, overflow: 'hidden' }}>
-          <Box component="img" src={restaurant.image} alt={restaurant.name} sx={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-        </Box>
-
-        <Container>
-          {/* Restaurant Info */}
-          <Card sx={{ mt: -4, position: 'relative', zIndex: 1, mb: 3 }}>
-            <CardContent>
-              <Grid container spacing={2}>
-                <Grid item xs={12} md={8}>
-                  <Typography variant="h4" gutterBottom>{restaurant.name}</Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                    <Rating value={restaurant.rating} precision={0.5} readOnly size="small" />
-                    <Typography variant="body2" sx={{ ml: 1 }}>{restaurant.rating}</Typography>
-                  </Box>
-                  <Typography variant="body2" color="text.secondary" paragraph>{restaurant.description}</Typography>
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                    {restaurant.tags.map((tag, idx) => (
-                      <Chip key={idx} label={tag} size="small" />
-                    ))}
-                  </Box>
-                </Grid>
-                <Grid item xs={12} md={4}>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                    <Typography variant="body2"><TimeIcon fontSize="small" /> {restaurant.deliveryTime} delivery</Typography>
-                    <Typography variant="body2"><DeliveryIcon fontSize="small" /> {restaurant.deliveryFee} delivery fee</Typography>
-                    <Typography variant="body2">Min order: {restaurant.minOrder}</Typography>
-                    <Typography variant="body2">Hours: {restaurant.openingHours}</Typography>
-                  </Box>
-                </Grid>
-              </Grid>
-            </CardContent>
-          </Card>
-
-          {/* Menu */}
-          <Tabs value={activeTab} onChange={handleTabChange} variant="scrollable" scrollButtons="auto" sx={{ mb: 2 }}>
-            {restaurant.menuCategories.map((cat, idx) => (
-              <Tab label={cat.name} key={idx} />
-            ))}
-          </Tabs>
-
-          {restaurant.menuCategories.map((cat, idx) => (
-            <Box key={cat.id} hidden={activeTab !== idx}>
-              <Grid container spacing={2}>
-                {cat.items.map(item => (
-                  <Grid item xs={12} sm={6} md={4} key={item.id}>
-                    <Card onClick={() => openItemDialog(item)} sx={{ cursor: 'pointer', transition: '0.2s', '&:hover': { transform: 'scale(1.03)' } }}>
-                      <CardMedia component="img" height="140" image={item.image} alt={item.name} />
-                      <CardContent>
-                        <Typography variant="h6">{item.name}</Typography>
-                        <Typography variant="body2" color="text.secondary">{item.description}</Typography>
-                        <Typography variant="subtitle1">${item.price.toFixed(2)}</Typography>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                ))}
-              </Grid>
-            </Box>
-          ))}
-        </Container>
-      </Box>
-
-      {/* Floating Cart Button */}
-      {JSON.parse(localStorage.getItem('cartItems') || '[]').length > 0 && (
-        <Box sx={{ position: 'fixed', bottom: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 1000 }}>
-          <Button variant="contained" color="primary" size="large" startIcon={<CartIcon />} onClick={goToCart}>
-            View Cart
-          </Button>
-        </Box>
-      )}
-
-      {/* Item Dialog */}
-      <Dialog open={Boolean(selectedItem)} onClose={closeItemDialog} maxWidth="sm" fullWidth>
-        {selectedItem && (
-          <>
-            <Box sx={{ position: 'relative' }}>
-              <CardMedia component="img" height="200" image={selectedItem.image} alt={selectedItem.name} />
-              <IconButton onClick={closeItemDialog} sx={{ position: 'absolute', top: 8, right: 8, backgroundColor: 'rgba(0,0,0,0.5)' }}>
-                <CloseIcon sx={{ color: 'white' }} />
+      <Container>
+        <Box sx={{ my: 4 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
+            {activeStep > 0 && (
+              <IconButton onClick={handleBack} sx={{ mr: 1 }}>
+                <ArrowBackIcon />
               </IconButton>
-            </Box>
-            <DialogTitle>{selectedItem.name}</DialogTitle>
-            <DialogContent>
-              <Typography gutterBottom>{selectedItem.description}</Typography>
-              {selectedItem.options && selectedItem.options.map((option, idx) => (
-                <Box key={idx} sx={{ mt: 2 }}>
-                  <Typography variant="subtitle1">{option.name}</Typography>
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                    {option.choices.map((choice, i) => (
-                      <Chip
-                        key={i}
-                        label={choice}
-                        clickable
-                        color={selectedOptions[option.name] === choice ? 'primary' : 'default'}
-                        onClick={() => handleOptionChange(option.name, choice)}
+            )}
+            <Typography variant="h4" component="h1">
+              {activeStep === 3 ? 'Order' : steps[activeStep]}
+            </Typography>
+          </Box>
+
+          <Stepper activeStep={activeStep} alternativeLabel sx={{ mb: 4 }}>
+            {steps.map((label) => (
+              <Step key={label}>
+                <StepLabel>{label}</StepLabel>
+              </Step>
+            ))}
+          </Stepper>
+
+          {/* Cart Items */}
+          {activeStep === 0 && (
+            <>
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={8}>
+                  <Paper sx={{ p: 2, mb: 2 }}>
+                    <Typography variant="h6" gutterBottom>
+                      Items in your cart
+                    </Typography>
+                    <List>
+                      {cartItems.map((item) => (
+                        <React.Fragment key={item.id}>
+                          <ListItem 
+                            sx={{ 
+                              py: 2, 
+                              display: 'flex', 
+                              flexDirection: { xs: 'column', sm: 'row' },
+                              alignItems: { xs: 'flex-start', sm: 'center' }
+                            }}
+                          >
+                            <ListItemText
+                              primary={item.name}
+                              secondary={
+                                <Box component="span">
+                                  ${item.price.toFixed(2)}
+                                  {Object.entries(item.options).map(([key, value]) => (
+                                    <Typography key={key} variant="body2" color="text.secondary" component="span">
+                                      {` • ${key}: ${value}`}
+                                    </Typography>
+                                  ))}
+                                </Box>
+                              }
+                              sx={{ flex: '1 1 auto' }}
+                            />
+                            <Box sx={{ display: 'flex', alignItems: 'center', mt: { xs: 2, sm: 0 } }}>
+                              <IconButton 
+                                size="small" 
+                                onClick={() => handleQuantityChange(item.id, -1)}
+                                disabled={item.quantity <= 1}
+                              >
+                                <RemoveIcon fontSize="small" />
+                              </IconButton>
+                              <Typography variant="body1" sx={{ mx: 1 }}>
+                                {item.quantity}
+                              </Typography>
+                              <IconButton 
+                                size="small" 
+                                onClick={() => handleQuantityChange(item.id, 1)}
+                              >
+                                <AddIcon fontSize="small" />
+                              </IconButton>
+                              <Typography variant="body1" sx={{ mx: 2 }}>
+                                ${item.total.toFixed(2)}
+                              </Typography>
+                              <IconButton 
+                                edge="end" 
+                                onClick={() => handleRemoveItem(item.id)}
+                                color="error"
+                                size="small"
+                              >
+                                <DeleteIcon />
+                              </IconButton>
+                            </Box>
+                          </ListItem>
+                          <Divider />
+                        </React.Fragment>
+                      ))}
+                    </List>
+                  </Paper>
+                </Grid>
+                
+                <Grid item xs={12} md={4}>
+                  <Paper sx={{ p: 2 }}>
+                    <Typography variant="h6" gutterBottom>
+                      Order Summary
+                    </Typography>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                      <Typography variant="body1">Subtotal</Typography>
+                      <Typography variant="body1">${calculateSubtotal().toFixed(2)}</Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                      <Typography variant="body1">Delivery Fee</Typography>
+                      <Typography variant="body1">${calculateDeliveryFee().toFixed(2)}</Typography>
+                    </Box>
+                    <Divider sx={{ my: 2 }} />
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                      <Typography variant="h6">Total</Typography>
+                      <Typography variant="h6">${calculateTotal().toFixed(2)}</Typography>
+                    </Box>
+                    <Button 
+                      variant="contained" 
+                      color="primary" 
+                      fullWidth 
+                      onClick={handleNext}
+                    >
+                      Continue to Delivery
+                    </Button>
+                  </Paper>
+                </Grid>
+              </Grid>
+            </>
+          )}
+
+          {/* Delivery Information */}
+          {activeStep === 1 && (
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={8}>
+                <Paper sx={{ p: 3 }}>
+                  <Typography variant="h6" gutterBottom>
+                    Delivery Address
+                  </Typography>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12}>
+                      <TextField
+                        required
+                        id="street"
+                        name="street"
+                        label="Street Address"
+                        fullWidth
+                        value={deliveryAddress.street}
+                        onChange={handleAddressChange}
+                        error={!!formErrors.street}
+                        helperText={formErrors.street}
                       />
-                    ))}
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        required
+                        id="city"
+                        name="city"
+                        label="City"
+                        fullWidth
+                        value={deliveryAddress.city}
+                        onChange={handleAddressChange}
+                        error={!!formErrors.city}
+                        helperText={formErrors.city}
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        required
+                        id="state"
+                        name="state"
+                        label="State/Province/Region"
+                        fullWidth
+                        value={deliveryAddress.state}
+                        onChange={handleAddressChange}
+                        error={!!formErrors.state}
+                        helperText={formErrors.state}
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        required
+                        id="zip"
+                        name="zip"
+                        label="ZIP / Postal code"
+                        fullWidth
+                        value={deliveryAddress.zip}
+                        onChange={handleAddressChange}
+                        error={!!formErrors.zip}
+                        helperText={formErrors.zip}
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <TextField
+                        id="instructions"
+                        name="instructions"
+                        label="Delivery Instructions (Optional)"
+                        fullWidth
+                        multiline
+                        rows={3}
+                        value={deliveryAddress.instructions}
+                        onChange={handleAddressChange}
+                        placeholder="Add delivery instructions (e.g., gate code, landmark, etc.)"
+                      />
+                    </Grid>
+                  </Grid>
+                </Paper>
+              </Grid>
+              
+              <Grid item xs={12} md={4}>
+                <Paper sx={{ p: 2 }}>
+                  <Typography variant="h6" gutterBottom>
+                    Order Summary
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    {cartItems.length} {cartItems.length === 1 ? 'item' : 'items'} from Restaurant
+                  </Typography>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography variant="body1">Subtotal</Typography>
+                    <Typography variant="body1">${calculateSubtotal().toFixed(2)}</Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography variant="body1">Delivery Fee</Typography>
+                    <Typography variant="body1">${calculateDeliveryFee().toFixed(2)}</Typography>
+                  </Box>
+                  <Divider sx={{ my: 2 }} />
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                    <Typography variant="h6">Total</Typography>
+                    <Typography variant="h6">${calculateTotal().toFixed(2)}</Typography>
+                  </Box>
+                  <Button 
+                    variant="contained" 
+                    color="primary" 
+                    fullWidth 
+                    onClick={handleNext}
+                  >
+                    Continue to Payment
+                  </Button>
+                </Paper>
+              </Grid>
+            </Grid>
+          )}
+
+          {/* Payment Method */}
+          {activeStep === 2 && (
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={8}>
+                <Paper sx={{ p: 3 }}>
+                  <Typography variant="h6" gutterBottom>
+                    Payment Method
+                  </Typography>
+                  <FormControl component="fieldset">
+                    <RadioGroup
+                      aria-label="payment-method"
+                      name="payment-method"
+                      value={paymentMethod}
+                      onChange={handlePaymentChange}
+                    >
+                      <FormControlLabel
+                        value="creditCard"
+                        control={<Radio />}
+                        label={
+                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <CreditCardIcon sx={{ mr: 1 }} />
+                            <Typography>Credit/Debit Card</Typography>
+                          </Box>
+                        }
+                      />
+                      <Accordion 
+                        expanded={paymentMethod === 'creditCard'} 
+                        sx={{ boxShadow: 'none', '&:before': { display: 'none' } }}
+                      >
+                        <AccordionDetails>
+                          <Grid container spacing={2}>
+                            <Grid item xs={12}>
+                              <TextField
+                                required
+                                id="cc-number"
+                                label="Card Number"
+                                fullWidth
+                                placeholder="1234 5678 9012 3456"
+                              />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                              <TextField
+                                required
+                                id="cc-exp"
+                                label="Expiry Date"
+                                fullWidth
+                                placeholder="MM/YY"
+                              />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                              <TextField
+                                required
+                                id="cc-cvv"
+                                label="CVV"
+                                fullWidth
+                                placeholder="123"
+                              />
+                            </Grid>
+                            <Grid item xs={12}>
+                              <TextField
+                                required
+                                id="cc-name"
+                                label="Name on Card"
+                                fullWidth
+                              />
+                            </Grid>
+                          </Grid>
+                        </AccordionDetails>
+                      </Accordion>
+
+                      <FormControlLabel
+                        value="onlinePayment"
+                        control={<Radio />}
+                        label={
+                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <BankIcon sx={{ mr: 1 }} />
+                            <Typography>Online Payment (PayPal, etc.)</Typography>
+                          </Box>
+                        }
+                      />
+                      <Accordion 
+                        expanded={paymentMethod === 'onlinePayment'} 
+                        sx={{ boxShadow: 'none', '&:before': { display: 'none' } }}
+                      >
+                        <AccordionDetails>
+                          <Alert severity="info">
+                            You will be redirected to a secure payment gateway to complete your payment.
+                          </Alert>
+                        </AccordionDetails>
+                      </Accordion>
+
+                      <FormControlLabel
+                        value="cashOnDelivery"
+                        control={<Radio />}
+                        label={
+                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <CashIcon sx={{ mr: 1 }} />
+                            <Typography>Cash on Delivery</Typography>
+                          </Box>
+                        }
+                      />
+                    </RadioGroup>
+                  </FormControl>
+                </Paper>
+              </Grid>
+              
+              <Grid item xs={12} md={4}>
+                <Paper sx={{ p: 2, mb: 2 }}>
+                  <Typography variant="h6" gutterBottom>
+                    Order Summary
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    {cartItems.length} {cartItems.length === 1 ? 'item' : 'items'} from Restaurant
+                  </Typography>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography variant="body1">Subtotal</Typography>
+                    <Typography variant="body1">${calculateSubtotal().toFixed(2)}</Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography variant="body1">Delivery Fee</Typography>
+                    <Typography variant="body1">${calculateDeliveryFee().toFixed(2)}</Typography>
+                  </Box>
+                  <Divider sx={{ my: 2 }} />
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                    <Typography variant="h6">Total</Typography>
+                    <Typography variant="h6">${calculateTotal().toFixed(2)}</Typography>
+                  </Box>
+                </Paper>
+
+                <Paper sx={{ p: 2 }}>
+                  <Typography variant="h6" gutterBottom>
+                    Delivery Details
+                  </Typography>
+                  <Typography variant="body2">
+                    {deliveryAddress.street}, {deliveryAddress.city}, {deliveryAddress.state} {deliveryAddress.zip}
+                  </Typography>
+                  {deliveryAddress.instructions && (
+                    <Typography variant="body2" sx={{ mt: 1 }}>
+                      Instructions: {deliveryAddress.instructions}
+                    </Typography>
+                  )}
+                  <Button 
+                    variant="contained" 
+                    color="primary" 
+                    fullWidth 
+                    sx={{ mt: 2 }}
+                    onClick={handlePlaceOrder}
+                  >
+                    Place Order
+                  </Button>
+                </Paper>
+              </Grid>
+            </Grid>
+          )}
+
+          {/* Order Confirmation */}
+          {activeStep === 3 && (
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              {isProcessingPayment ? (
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', my: 4 }}>
+                  <CircularProgress size={60} sx={{ mb: 2 }} />
+                  <Typography variant="h6">Processing your payment...</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Please don't close this page.
+                  </Typography>
+                </Box>
+              ) : orderSuccess ? (
+                <Box sx={{ textAlign: 'center', my: 4 }}>
+                  <Box 
+                    sx={{ 
+                      bgcolor: 'success.main', 
+                      color: 'white', 
+                      height: 80, 
+                      width: 80, 
+                      borderRadius: '50%', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      mx: 'auto',
+                      mb: 2
+                    }}
+                  >
+                    <CheckIcon sx={{ fontSize: 40 }} />
+                  </Box>
+                  <Typography variant="h4" gutterBottom>
+                    Order Confirmed!
+                  </Typography>
+                  <Typography variant="body1" paragraph>
+                    Your order has been placed and is being processed.
+                  </Typography>
+                  
+                  <Card sx={{ maxWidth: 600, mx: 'auto', mb: 4 }}>
+                    <CardContent>
+                      <Typography variant="h6" color="primary" gutterBottom>
+                        Order #{orderDetails?.orderId}
+                      </Typography>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                        <Typography variant="body2" color="text.secondary">
+                          Estimated Delivery
+                        </Typography>
+                        <Typography variant="body1">
+                          {orderDetails?.estimatedDelivery}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                        <Typography variant="body2" color="text.secondary">
+                          Restaurant
+                        </Typography>
+                        <Typography variant="body1">
+                          {orderDetails?.restaurant}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                        <Typography variant="body2" color="text.secondary">
+                          Total
+                        </Typography>
+                        <Typography variant="body1">
+                          ${orderDetails?.total.toFixed(2)}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                        <Typography variant="body2" color="text.secondary">
+                          Delivery Address
+                        </Typography>
+                        <Typography variant="body1" align="right" sx={{ maxWidth: '60%' }}>
+                          {orderDetails?.deliveryAddress}
+                        </Typography>
+                      </Box>
+                    </CardContent>
+                  </Card>
+                  
+                  <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
+                    <Button 
+                      variant="outlined" 
+                      onClick={goToHome}
+                    >
+                      Return to Home
+                    </Button>
+                    <Button 
+                      variant="contained" 
+                      onClick={goToOrderTracking}
+                    >
+                      Track Order
+                    </Button>
                   </Box>
                 </Box>
-              ))}
-              <Box sx={{ display: 'flex', alignItems: 'center', mt: 3 }}>
-                <Typography>Qty:</Typography>
-                <IconButton onClick={decreaseItemCount}><RemoveIcon /></IconButton>
-                <TextField value={itemCount} size="small" sx={{ width: 50, mx: 1 }} disabled />
-                <IconButton onClick={increaseItemCount}><AddIcon /></IconButton>
-              </Box>
-            </DialogContent>
-            <DialogActions>
-              <Button fullWidth variant="contained" onClick={addToCart}>
-                Add to Cart - ${calculateItemTotal().toFixed(2)}
-              </Button>
-            </DialogActions>
-          </>
-        )}
-      </Dialog>
-
-      {/* Snackbar */}
-      <Snackbar open={snackbarOpen} autoHideDuration={3000} onClose={handleCloseSnackbar}>
-        <Alert severity="success" onClose={handleCloseSnackbar} sx={{ width: '100%' }}>
-          Item added to cart!
-        </Alert>
-      </Snackbar>
+              ) : null}
+            </Box>
+          )}
+        </Box>
+      </Container>
+      
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={3000}
+        onClose={() => setSnackbarOpen(false)}
+        message={snackbarMessage}
+      />
     </Layout>
   );
 };
 
-export default RestaurantDetail;
+export default Cart; 

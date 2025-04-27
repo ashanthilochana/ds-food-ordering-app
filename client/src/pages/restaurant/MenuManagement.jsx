@@ -45,8 +45,10 @@ import {
   AddCircle as AddCircleIcon,
   RemoveCircle as RemoveCircleIcon,
   Image as ImageIcon,
-  FastfoodOutlined as FoodIcon
+  FastfoodOutlined as FoodIcon,
+  ArrowBack as BackIcon
 } from '@mui/icons-material';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Layout from '../../components/layout/Layout';
 
 // Mock data
@@ -116,6 +118,9 @@ const mockMenuItems = [
 ];
 
 const MenuManagement = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const restaurantId = new URLSearchParams(location.search).get('restaurantId');
   const [categories, setCategories] = useState([]);
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -436,9 +441,17 @@ const MenuManagement = () => {
       <Container>
         <Box sx={{ my: 4 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-            <Typography variant="h4" component="h1">
-              Menu Management
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Button
+                startIcon={<BackIcon />}
+                onClick={() => navigate(`/restaurant-dashboard/${restaurantId}`)}
+              >
+                Back to Dashboard
+              </Button>
+              <Typography variant="h4" component="h1">
+                Menu Management
+              </Typography>
+            </Box>
             <Button
               variant="contained"
               color="primary"
