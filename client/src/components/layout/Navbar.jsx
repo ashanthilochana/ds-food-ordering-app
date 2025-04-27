@@ -27,8 +27,7 @@ import {
   Logout as LogoutIcon, 
   Dashboard as DashboardIcon,
   LocalShipping as DeliveryIcon,
-  AccountCircle as AccountIcon,
-  History as HistoryIcon
+  AccountCircle as AccountIcon
 } from '@mui/icons-material';
 import { useNavigate, Link } from 'react-router-dom';
 import authService from '../../services/auth.service';
@@ -77,17 +76,27 @@ const Navbar = ({ cartItems = [], userRole }) => {
     handleClose();
   };
 
-  // Always show customer navigation if user is a customer
-  const isCustomer = user?.user?.role === 'customer' || userRole === 'customer';
-
   const getNavLinks = () => {
-    if (isCustomer) {
-      return [
-        { text: 'All Restaurants', icon: <RestaurantIcon />, path: '/restaurants' },
-        { text: 'My Orders', icon: <HistoryIcon />, path: '/dashboard' },
-      ];
+    switch(userRole) {
+      case 'customer':
+        return [
+          { text: 'Restaurants', icon: <RestaurantIcon />, path: '/restaurants' },
+          { text: 'My Orders', icon: <DashboardIcon />, path: '/dashboard' },
+        ];
+      case 'restaurant_admin':
+        return [
+          { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
+          { text: 'Menu', icon: <RestaurantIcon />, path: '/menu-management' },
+          { text: 'Orders', icon: <CartIcon />, path: '/restaurant-orders' },
+        ];
+      case 'delivery_person':
+        return [
+          { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
+          { text: 'My Deliveries', icon: <DeliveryIcon />, path: '/dashboard' },
+        ];
+      default:
+        return [];
     }
-    return [];
   };
 
   const navLinks = getNavLinks();
@@ -147,7 +156,7 @@ const Navbar = ({ cartItems = [], userRole }) => {
             </Box>
           )}
 
-          {isCustomer && (
+          {userRole === 'customer' && (
             <IconButton 
               color="inherit" 
               component={Link} 
