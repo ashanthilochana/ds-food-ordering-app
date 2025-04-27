@@ -45,6 +45,10 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../../components/layout/Layout';
+import Cookies from 'js-cookie';
+
+const CART_COOKIE_NAME = 'cartItems';
+const CART_EXPIRY_DAYS = 7; // Cart items will expire after 7 days
 
 const Cart = () => {
   const navigate = useNavigate();
@@ -66,8 +70,8 @@ const Cart = () => {
   const [snackbarMessage, setSnackbarMessage] = useState('');
 
   useEffect(() => {
-    // Fetch cart items from localStorage or context
-    const savedCartItems = localStorage.getItem('cartItems');
+    // Fetch cart items from cookies
+    const savedCartItems = Cookies.get(CART_COOKIE_NAME);
     if (savedCartItems) {
       try {
       setCartItems(JSON.parse(savedCartItems));
@@ -77,6 +81,13 @@ const Cart = () => {
       }
     }
   }, []);
+
+  const saveCartToCookie = (items) => {
+    Cookies.set(CART_COOKIE_NAME, JSON.stringify(items), { 
+      expires: CART_EXPIRY_DAYS,
+      path: '/'
+    });
+  };
 
   const handleQuantityChange = (itemId, change) => {
     const updatedCartItems = cartItems.map(item => {
@@ -92,13 +103,13 @@ const Cart = () => {
     });
     
     setCartItems(updatedCartItems);
-    localStorage.setItem('cartItems', JSON.stringify(updatedCartItems));
+    saveCartToCookie(updatedCartItems);
   };
 
   const handleRemoveItem = (itemId) => {
     const updatedCartItems = cartItems.filter(item => item.id !== itemId);
     setCartItems(updatedCartItems);
-    localStorage.setItem('cartItems', JSON.stringify(updatedCartItems));
+    saveCartToCookie(updatedCartItems);
     
     if (updatedCartItems.length === 0) {
       setSnackbarMessage('Your cart is empty!');
@@ -193,8 +204,8 @@ const Cart = () => {
         deliveryAddress: `${deliveryAddress.street}, ${deliveryAddress.city}, ${deliveryAddress.state} ${deliveryAddress.zip}`
       });
       
-      // Clear cart
-      localStorage.removeItem('cartItems');
+      // Clear cart from cookies
+      Cookies.remove(CART_COOKIE_NAME, { path: '/' });
     }, 2000);
   };
 

@@ -36,10 +36,123 @@ import {
   Phone as PhoneIcon,
   DoneAll as DoneAllIcon,
   Cancel as CancelIcon,
-  Refresh as RefreshIcon,
-  Restaurant as RestaurantIcon
+  Refresh as RefreshIcon
 } from '@mui/icons-material';
 import Layout from '../../components/layout/Layout';
+
+// Mock delivery data
+const mockDeliveries = [
+  {
+    id: 'd1001',
+    orderId: '12348',
+    status: 'assigned', // 'assigned', 'picked_up', 'delivered', 'cancelled'
+    restaurant: {
+      name: 'Pizza Palace',
+      address: '123 Main Street, Cityville',
+      phone: '+1 234-567-8900',
+      location: { lat: 40.7128, lng: -74.0060 }
+    },
+    customer: {
+      name: 'Sarah Williams',
+      address: '101 Maple St, Cityville',
+      phone: '+1 234-567-8903',
+      location: { lat: 40.7200, lng: -74.0100 },
+      notes: ''
+    },
+    orderTime: '2023-09-15T09:45:00Z',
+    estimatedDeliveryTime: '2023-09-15T10:30:00Z',
+    items: [
+      { name: 'Supreme Pizza', quantity: 1 },
+      { name: 'Hot Wings', quantity: 10 },
+      { name: 'Bottled Water', quantity: 2 }
+    ],
+    totalAmount: 28.38,
+    paymentMethod: 'Credit Card'
+  },
+  {
+    id: 'd1002',
+    orderId: '12351',
+    status: 'picked_up',
+    restaurant: {
+      name: 'Burger Hub',
+      address: '456 Oak Avenue, Cityville',
+      phone: '+1 234-567-8910',
+      location: { lat: 40.7150, lng: -74.0070 }
+    },
+    customer: {
+      name: 'Robert Johnson',
+      address: '202 Pine St, Cityville',
+      phone: '+1 234-567-8920',
+      location: { lat: 40.7180, lng: -74.0090 },
+      notes: 'Apartment 3B, ring the buzzer'
+    },
+    orderTime: '2023-09-15T10:00:00Z',
+    estimatedDeliveryTime: '2023-09-15T10:45:00Z',
+    items: [
+      { name: 'Double Cheese Burger', quantity: 2 },
+      { name: 'French Fries', quantity: 1 },
+      { name: 'Milkshake', quantity: 2 }
+    ],
+    totalAmount: 32.95,
+    paymentMethod: 'Cash on Delivery'
+  },
+  {
+    id: 'd1003',
+    orderId: '12352',
+    status: 'delivered',
+    restaurant: {
+      name: 'Sushi Express',
+      address: '789 Cherry Blvd, Cityville',
+      phone: '+1 234-567-8930',
+      location: { lat: 40.7160, lng: -74.0050 }
+    },
+    customer: {
+      name: 'Alice Cooper',
+      address: '303 Elm St, Cityville',
+      phone: '+1 234-567-8940',
+      location: { lat: 40.7210, lng: -74.0080 },
+      notes: 'Leave at the door'
+    },
+    orderTime: '2023-09-15T09:15:00Z',
+    estimatedDeliveryTime: '2023-09-15T10:00:00Z',
+    deliveredTime: '2023-09-15T09:55:00Z',
+    items: [
+      { name: 'California Roll', quantity: 2 },
+      { name: 'Miso Soup', quantity: 1 },
+      { name: 'Green Tea', quantity: 1 }
+    ],
+    totalAmount: 24.50,
+    paymentMethod: 'Online Payment'
+  },
+  {
+    id: 'd1004',
+    orderId: '12353',
+    status: 'cancelled',
+    restaurant: {
+      name: 'Taco Town',
+      address: '555 Sunset Drive, Cityville',
+      phone: '+1 234-567-8950',
+      location: { lat: 40.7140, lng: -74.0040 }
+    },
+    customer: {
+      name: 'David Smith',
+      address: '404 Birch Rd, Cityville',
+      phone: '+1 234-567-8960',
+      location: { lat: 40.7190, lng: -74.0110 },
+      notes: ''
+    },
+    orderTime: '2023-09-15T08:30:00Z',
+    estimatedDeliveryTime: '2023-09-15T09:15:00Z',
+    cancelReason: 'Restaurant closed unexpectedly',
+    items: [
+      { name: 'Taco Combo', quantity: 1 },
+      { name: 'Nachos', quantity: 1 },
+      { name: 'Soda', quantity: 1 }
+    ],
+    totalAmount: 18.75,
+    paymentMethod: 'Credit Card'
+  }
+];
 
 const DeliveryDashboard = () => {
   const [loading, setLoading] = useState(true);
@@ -52,31 +165,12 @@ const DeliveryDashboard = () => {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [refreshing, setRefreshing] = useState(false);
 
-  // Fetch deliveries from backend
-  const fetchDeliveries = async () => {
-    setLoading(true);
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/deliveries/my-deliveries', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-      if (!response.ok) throw new Error('Failed to fetch deliveries');
-      const data = await response.json();
-      setDeliveries(data);
-    } catch (error) {
-      setSnackbar({
-        open: true,
-        message: 'Failed to fetch deliveries',
-        severity: 'error'
-      });
-    }
-    setLoading(false);
-  };
-
   useEffect(() => {
-    fetchDeliveries();
+    // Simulating API call to fetch deliveries
+    setTimeout(() => {
+      setDeliveries(mockDeliveries);
+      setLoading(false);
+    }, 1000);
   }, []);
 
   const handleTabChange = (event, newValue) => {
@@ -85,14 +179,15 @@ const DeliveryDashboard = () => {
 
   const handleRefresh = () => {
     setRefreshing(true);
-    fetchDeliveries().then(() => {
+    setTimeout(() => {
+      // In a real app, you'd refresh the data from the server
       setRefreshing(false);
       setSnackbar({
         open: true,
         message: 'Deliveries refreshed',
         severity: 'success'
       });
-    });
+    }, 1000);
   };
 
   const handleOpenDeliveryDetail = (delivery) => {
@@ -710,4 +805,4 @@ const DeliveryDashboard = () => {
   );
 };
 
-export default DeliveryDashboard;
+export default DeliveryDashboard; 
