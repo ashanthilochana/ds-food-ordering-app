@@ -3,24 +3,32 @@ import axios from 'axios';
 const API_URL = 'http://localhost:3001/api/restaurants';
 
 function getAuthHeader() {
-  const user = JSON.parse(localStorage.getItem('user'));
-  if (user && user.token) {
-    console.log('getAuthHeader: using token', user.token);
-    return { Authorization: `Bearer ${user.token}` };
+  try {
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (user && user.token) {
+      console.log('getAuthHeader: using token', user.token);
+      return { Authorization: `Bearer ${user.token}` };
+    }
+    console.error('getAuthHeader: no token found in localStorage');
+    return {};
+  } catch (error) {
+    console.error('getAuthHeader: error parsing user data:', error);
+    return {};
   }
-  console.log('getAuthHeader: no token found');
-  return {};
 }
 
 export const restaurantService = {
   // Add new restaurant
   addRestaurant: async (restaurantData) => {
     try {
+      const headers = getAuthHeader();
+      console.log('Making request to addRestaurant with headers:', headers);
       const response = await axios.post(API_URL, restaurantData, {
-        headers: { ...getAuthHeader() }
+        headers
       });
       return response.data;
     } catch (error) {
+      console.error('Error in addRestaurant:', error.response || error);
       throw error.response?.data || error.message;
     }
   },
@@ -28,12 +36,15 @@ export const restaurantService = {
   // Get all restaurants
   getAllRestaurants: async (filters = {}) => {
     try {
+      const headers = getAuthHeader();
+      console.log('Making request to getAllRestaurants with headers:', headers);
       const response = await axios.get(API_URL, {
         params: filters,
-        headers: { ...getAuthHeader() }
+        headers
       });
       return response.data;
     } catch (error) {
+      console.error('Error in getAllRestaurants:', error.response || error);
       throw error.response?.data || error.message;
     }
   },
@@ -41,11 +52,14 @@ export const restaurantService = {
   // Get restaurant by ID
   getRestaurantById: async (id) => {
     try {
+      const headers = getAuthHeader();
+      console.log('Making request to getRestaurantById with headers:', headers);
       const response = await axios.get(`${API_URL}/${id}`, {
-        headers: { ...getAuthHeader() }
+        headers
       });
       return response.data;
     } catch (error) {
+      console.error('Error in getRestaurantById:', error.response || error);
       throw error.response?.data || error.message;
     }
   },
@@ -53,11 +67,14 @@ export const restaurantService = {
   // Update restaurant
   updateRestaurant: async (id, restaurantData) => {
     try {
+      const headers = getAuthHeader();
+      console.log('Making request to updateRestaurant with headers:', headers);
       const response = await axios.put(`${API_URL}/${id}`, restaurantData, {
-        headers: { ...getAuthHeader() }
+        headers
       });
       return response.data;
     } catch (error) {
+      console.error('Error in updateRestaurant:', error.response || error);
       throw error.response?.data || error.message;
     }
   },
@@ -65,11 +82,14 @@ export const restaurantService = {
   // Delete restaurant
   deleteRestaurant: async (id) => {
     try {
+      const headers = getAuthHeader();
+      console.log('Making request to deleteRestaurant with headers:', headers);
       const response = await axios.delete(`${API_URL}/${id}`, {
-        headers: { ...getAuthHeader() }
+        headers
       });
       return response.data;
     } catch (error) {
+      console.error('Error in deleteRestaurant:', error.response || error);
       throw error.response?.data || error.message;
     }
   },
@@ -77,11 +97,14 @@ export const restaurantService = {
   // Toggle restaurant status
   toggleStatus: async (id) => {
     try {
+      const headers = getAuthHeader();
+      console.log('Making request to toggleStatus with headers:', headers);
       const response = await axios.patch(`${API_URL}/${id}/toggle-status`, {}, {
-        headers: { ...getAuthHeader() }
+        headers
       });
       return response.data;
     } catch (error) {
+      console.error('Error in toggleStatus:', error.response || error);
       throw error.response?.data || error.message;
     }
   },
@@ -89,11 +112,14 @@ export const restaurantService = {
   // Get all restaurants for the logged-in owner
   getMyRestaurants: async () => {
     try {
+      const headers = getAuthHeader();
+      console.log('Making request to my-restaurants with headers:', headers);
       const response = await axios.get(`${API_URL}/my-restaurants`, {
-        headers: { ...getAuthHeader() }
+        headers
       });
       return response.data;
     } catch (error) {
+      console.error('Error in getMyRestaurants:', error.response || error);
       throw error.response?.data || error.message;
     }
   }

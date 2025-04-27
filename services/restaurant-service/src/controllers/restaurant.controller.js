@@ -9,20 +9,28 @@ exports.createRestaurant = async (req, res) => {
       return res.status(400).json({ errors: errors.array() });
     }
 
+    console.log('Creating restaurant with user:', req.user);
+
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ message: 'User ID not found' });
+    }
+
     const restaurantData = {
       ...req.body,
-      owner: req.user._id, // Using _id from Auth Service user object
+      owner: req.user.id, // Using id from Auth Service user object
       contactInfo: {
         ...req.body.contactInfo,
-        email: req.user.email // Use the authenticated user's email
+        email: req.user.email || '' // Use the authenticated user's email if available
       }
     };
 
+    console.log('Restaurant data to save:', restaurantData);
     const restaurant = new Restaurant(restaurantData);
 
     await restaurant.save();
     res.status(201).json(restaurant);
   } catch (error) {
+    console.error('Error creating restaurant:', error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -140,13 +148,30 @@ exports.toggleRestaurantStatus = async (req, res) => {
 // Get all restaurants for the logged-in owner
 exports.getRestaurantsByOwner = async (req, res) => {
   try {
-    console.log('req.user:', req.user);
-    if (!req.user || req.user.role !== 'restaurant_owner' || !req.user._id) {
-      return res.status(403).json({ message: 'Not authorized' });
+    console.log('getRestaurantsByOwner - User:', req.user);
+    
+    if (!req.user) {
+      console.error('No user object in request');
+      return res.status(401).json({ message: 'Not authenticated' });
     }
-    const restaurants = await Restaurant.find({ owner: req.user._id });
+    
+    if (req.user.role !== 'restaurant_admin') {
+      console.error('Invalid user role:', req.user.role);
+      return res.status(403).json({ message: 'Not authorized. Must be a restaurant admin.' });
+    }
+    
+    if (!req.user.id) {
+      console.error('No user ID in request');
+      return res.status(401).json({ message: 'Invalid user data' });
+    }
+
+    console.log('Finding restaurants for owner:', req.user.id);
+    const restaurants = await Restaurant.find({ owner: req.user.id });
+    console.log('Found restaurants:', restaurants);
+    
     res.json(restaurants);
   } catch (error) {
+    console.error('Error in getRestaurantsByOwner:', error);
     res.status(500).json({ message: error.message });
   }
 };

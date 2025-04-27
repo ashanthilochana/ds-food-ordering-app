@@ -1,6 +1,6 @@
 import axios from '../utils/axios';
 
-const API_URL = "http://localhost:3000/api/auth/";
+const API_URL = "http://localhost:3002/api/auth/";
 
 const register = async (email, password, name, role = "customer") => {
   try {
@@ -25,6 +25,7 @@ const register = async (email, password, name, role = "customer") => {
     const data = await response.json();
     return data;
   } catch (error) {
+    console.error('Registration error:', error);
     throw error;
   }
 };
@@ -53,7 +54,13 @@ const login = async (email, password) => {
     }
 
     if (data.token) {
-      localStorage.setItem("user", JSON.stringify(data));
+      // Store both token and user data
+      const userData = {
+        ...data.user,
+        token: data.token
+      };
+      localStorage.setItem("user", JSON.stringify(userData));
+      console.log('Stored user data:', userData);
     }
     return data;
   } catch (error) {
@@ -67,7 +74,13 @@ const logout = () => {
 };
 
 const getCurrentUser = () => {
-  return JSON.parse(localStorage.getItem("user"));
+  try {
+    const userData = localStorage.getItem("user");
+    return userData ? JSON.parse(userData) : null;
+  } catch (error) {
+    console.error('Error getting current user:', error);
+    return null;
+  }
 };
 
 const authService = {
