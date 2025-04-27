@@ -20,15 +20,15 @@ import Layout from '../../components/layout/Layout';
 
 // Mock data - replace with API calls
 const mockRestaurants = [
-  {
+    {
     id: 1,
     name: 'Pizza Palace',
     cuisine: 'Italian',
     address: '123 Main St',
     rating: 4.5,
     status: 'active'
-  },
-  {
+    },
+    {
     id: 2,
     name: 'Burger Hub',
     cuisine: 'American',
@@ -66,19 +66,19 @@ const RestaurantDashboard = () => {
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
         {/* Restaurant Management Section */}
         <Paper sx={{ p: 3 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
             <Typography variant="h5">
               My Restaurants
-            </Typography>
-            <Button
+          </Typography>
+          <Button
               variant="contained"
               startIcon={<AddIcon />}
               onClick={() => navigate('/add-restaurant')}
-            >
+          >
               Add New Restaurant
-            </Button>
-          </Box>
-          <Grid container spacing={3}>
+          </Button>
+        </Box>
+        <Grid container spacing={3}>
             {restaurants.map((restaurant) => (
               <Grid item xs={12} sm={6} md={4} key={restaurant.id}>
                 <Card 
@@ -113,7 +113,7 @@ const RestaurantDashboard = () => {
                   </CardContent>
                 </Card>
               </Grid>
-            ))}
+                ))}
           </Grid>
         </Paper>
       </Container>
