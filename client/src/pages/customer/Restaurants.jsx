@@ -18,77 +18,13 @@ import {
 } from '@mui/material';
 import { 
   Search as SearchIcon, 
-  Restaurant as RestaurantIcon,
-  ShoppingCart as CartIcon,
-  History as HistoryIcon
+  History as HistoryIcon,
+  ShoppingCart as CartIcon
 } from '@mui/icons-material';
 import { Link, useNavigate } from 'react-router-dom';
 import Layout from '../../components/layout/Layout';
 import authService from '../../services/auth.service';
-
-// Placeholder data - will be replaced with API call
-const mockRestaurants = [
-  {
-    id: 1,
-    name: 'Pizza Palace',
-    image: 'https://source.unsplash.com/random/300x200/?pizza',
-    cuisine: 'Italian',
-    rating: 4.5,
-    deliveryTime: '30-45 min',
-    minOrder: '$10',
-    tags: ['Pizza', 'Pasta', 'Italian']
-  },
-  {
-    id: 2,
-    name: 'Burger Hub',
-    image: 'https://source.unsplash.com/random/300x200/?burger',
-    cuisine: 'American',
-    rating: 4.2,
-    deliveryTime: '20-35 min',
-    minOrder: '$12',
-    tags: ['Burgers', 'Fast Food', 'American']
-  },
-  {
-    id: 3,
-    name: 'Sushi Express',
-    image: 'https://source.unsplash.com/random/300x200/?sushi',
-    cuisine: 'Japanese',
-    rating: 4.7,
-    deliveryTime: '40-55 min',
-    minOrder: '$15',
-    tags: ['Sushi', 'Japanese', 'Seafood']
-  },
-  {
-    id: 4,
-    name: 'Taco Town',
-    image: 'https://source.unsplash.com/random/300x200/?taco',
-    cuisine: 'Mexican',
-    rating: 4.0,
-    deliveryTime: '25-40 min',
-    minOrder: '$8',
-    tags: ['Tacos', 'Mexican', 'Burritos']
-  },
-  {
-    id: 5,
-    name: 'Curry House',
-    image: 'https://source.unsplash.com/random/300x200/?curry',
-    cuisine: 'Indian',
-    rating: 4.6,
-    deliveryTime: '35-50 min',
-    minOrder: '$15',
-    tags: ['Curry', 'Indian', 'Spicy']
-  },
-  {
-    id: 6,
-    name: 'Veggie Delight',
-    image: 'https://source.unsplash.com/random/300x200/?vegetable',
-    cuisine: 'Vegetarian',
-    rating: 4.3,
-    deliveryTime: '20-35 min',
-    minOrder: '$10',
-    tags: ['Vegetarian', 'Healthy', 'Salads']
-  }
-];
+import restaurantService from '../../services/restaurant.service';  // ✅ Add restaurant service import
 
 const Restaurants = () => {
   const navigate = useNavigate();
@@ -96,37 +32,27 @@ const Restaurants = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [user, setUser] = useState(null);
-  const [recentOrders, setRecentOrders] = useState([
-    {
-      id: '12345',
-      restaurant: 'Pizza Palace',
-      items: ['2x Margherita Pizza', '1x Garlic Bread'],
-      total: 42.98,
-      status: 'delivered',
-      date: '2024-02-20'
-    }
-  ]);
-  const [cartItems, setCartItems] = useState([
-    {
-      id: 1,
-      name: 'Margherita Pizza',
-      quantity: 2,
-      price: 15.99
-    }
-  ]);
+  const [recentOrders, setRecentOrders] = useState([]);
+  const [cartItems, setCartItems] = useState([]);
 
   useEffect(() => {
-    // Check if user is logged in
-    const currentUser = authService.getCurrentUser();
-    setUser(currentUser);
+    const fetchData = async () => {
+      try {
+        const currentUser = authService.getCurrentUser();
+        setUser(currentUser);
 
-    // Load restaurants
-    setTimeout(() => {
-      setRestaurants(mockRestaurants);
-      setLoading(false);
-    }, 1000);
+        const restaurantData = await restaurantService.getRestaurants();
+        setRestaurants(restaurantData);
 
-    // In production, you would fetch recent orders and cart items here
+        // Optional: You can load real recent orders and cart items here if needed.
+      } catch (error) {
+        console.error('Error fetching restaurants:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
 
   const getTotalCartAmount = () => {
@@ -140,8 +66,7 @@ const Restaurants = () => {
   const filteredRestaurants = restaurants.filter((restaurant) => {
     return (
       restaurant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      restaurant.cuisine.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      restaurant.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+      (restaurant.cuisine && restaurant.cuisine.join(',').toLowerCase().includes(searchTerm.toLowerCase()))
     );
   });
 
@@ -150,77 +75,41 @@ const Restaurants = () => {
       <Container>
         {user && (
           <Grid container spacing={3} sx={{ mb: 4 }}>
-            {/* Recent Order Summary */}
             <Grid item xs={12} md={6}>
               <Paper sx={{ p: 2, height: '100%' }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                  <Typography variant="h6">
-                    Recent Order
-                  </Typography>
-                  <Button
-                    startIcon={<HistoryIcon />}
-                    onClick={() => navigate('/dashboard')}
-                  >
-                    View All Orders
-                  </Button>
+                  <Typography variant="h6">Recent Order</Typography>
+                  <Button startIcon={<HistoryIcon />} onClick={() => navigate('/dashboard')}>View All Orders</Button>
                 </Box>
                 {recentOrders.length > 0 ? (
                   <Box>
                     <Typography variant="subtitle1">{recentOrders[0].restaurant}</Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {recentOrders[0].items.join(', ')}
-                    </Typography>
-                    <Typography variant="body2" sx={{ mt: 1 }}>
-                      Total: ${recentOrders[0].total.toFixed(2)}
-                    </Typography>
-                    <Button 
-                      size="small" 
-                      sx={{ mt: 1 }}
-                      onClick={() => navigate(`/track-order/${recentOrders[0].id}`)}
-                    >
-                      Track Order
-                    </Button>
+                    <Typography variant="body2" color="text.secondary">{recentOrders[0].items.join(', ')}</Typography>
+                    <Typography variant="body2" sx={{ mt: 1 }}>Total: ${recentOrders[0].total.toFixed(2)}</Typography>
+                    <Button size="small" sx={{ mt: 1 }} onClick={() => navigate(`/track-order/${recentOrders[0].id}`)}>Track Order</Button>
                   </Box>
                 ) : (
-                  <Typography variant="body2" color="text.secondary">
-                    No recent orders
-                  </Typography>
+                  <Typography variant="body2" color="text.secondary">No recent orders</Typography>
                 )}
               </Paper>
             </Grid>
 
-            {/* Cart Summary */}
             <Grid item xs={12} md={6}>
               <Paper sx={{ p: 2, height: '100%' }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                  <Typography variant="h6">
-                    Your Cart
-                  </Typography>
-                  <Button
-                    startIcon={<CartIcon />}
-                    onClick={() => navigate('/cart')}
-                  >
-                    View Cart
-                  </Button>
+                  <Typography variant="h6">Your Cart</Typography>
+                  <Button startIcon={<CartIcon />} onClick={() => navigate('/cart')}>View Cart</Button>
                 </Box>
                 {cartItems.length > 0 ? (
                   <Box>
                     {cartItems.map((item) => (
-                      <Box key={item.id} sx={{ mb: 1 }}>
-                        <Typography variant="body2">
-                          {item.quantity}x {item.name}
-                        </Typography>
-                      </Box>
+                      <Typography key={item.id} variant="body2">{item.quantity}x {item.name}</Typography>
                     ))}
                     <Divider sx={{ my: 1 }} />
-                    <Typography variant="subtitle1">
-                      Total: ${getTotalCartAmount().toFixed(2)}
-                    </Typography>
+                    <Typography variant="subtitle1">Total: ${getTotalCartAmount().toFixed(2)}</Typography>
                   </Box>
                 ) : (
-                  <Typography variant="body2" color="text.secondary">
-                    Your cart is empty
-                  </Typography>
+                  <Typography variant="body2" color="text.secondary">Your cart is empty</Typography>
                 )}
               </Paper>
             </Grid>
@@ -228,9 +117,7 @@ const Restaurants = () => {
         )}
 
         <Box sx={{ mb: 4 }}>
-          <Typography variant="h4" component="h1" gutterBottom>
-            Restaurants
-          </Typography>
+          <Typography variant="h4" component="h1" gutterBottom>Restaurants</Typography>
           <TextField
             fullWidth
             variant="outlined"
@@ -246,17 +133,6 @@ const Restaurants = () => {
             }}
             sx={{ mb: 3 }}
           />
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-            {['Italian', 'American', 'Japanese', 'Mexican', 'Indian', 'Vegetarian'].map((cuisine) => (
-              <Chip
-                key={cuisine}
-                label={cuisine}
-                onClick={() => setSearchTerm(cuisine)}
-                clickable
-                color={searchTerm === cuisine ? 'primary' : 'default'}
-              />
-            ))}
-          </Box>
         </Box>
 
         {loading ? (
@@ -266,13 +142,13 @@ const Restaurants = () => {
         ) : (
           <Grid container spacing={3}>
             {filteredRestaurants.map((restaurant) => (
-              <Grid item xs={12} sm={6} md={4} key={restaurant.id}>
-                <Card 
-                  component={Link} 
-                  to={`/restaurant/${restaurant.id}`}
-                  sx={{ 
-                    height: '100%', 
-                    display: 'flex', 
+              <Grid item xs={12} sm={6} md={4} key={restaurant._id}>
+                <Card
+                  component={Link}
+                  to={`/restaurant/${restaurant._id}`}
+                  sx={{
+                    height: '100%',
+                    display: 'flex',
                     flexDirection: 'column',
                     textDecoration: 'none',
                     transition: 'transform 0.2s',
@@ -285,37 +161,23 @@ const Restaurants = () => {
                   <CardMedia
                     component="img"
                     height="160"
-                    image={restaurant.image}
+                    image={restaurant.images && restaurant.images.length > 0 ? restaurant.images[0].url : 'https://source.unsplash.com/random/300x200/?restaurant'}
                     alt={restaurant.name}
                   />
                   <CardContent sx={{ flexGrow: 1 }}>
-                    <Typography gutterBottom variant="h6" component="h2">
-                      {restaurant.name}
-                    </Typography>
+                    <Typography gutterBottom variant="h6" component="h2">{restaurant.name}</Typography>
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                      <Rating 
-                        value={restaurant.rating} 
-                        precision={0.5} 
-                        size="small" 
-                        readOnly 
-                      />
+                      <Rating value={restaurant.rating || 0} precision={0.5} size="small" readOnly />
                       <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-                        {restaurant.rating}
+                        {restaurant.rating || 'No rating'}
                       </Typography>
                     </Box>
                     <Typography variant="body2" color="text.secondary" gutterBottom>
-                      {restaurant.cuisine} • {restaurant.deliveryTime} • Min {restaurant.minOrder}
+                      {restaurant.cuisine?.join(', ')}
                     </Typography>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 1 }}>
-                      {restaurant.tags.map((tag, index) => (
-                        <Chip
-                          key={index}
-                          label={tag}
-                          size="small"
-                          variant="outlined"
-                        />
-                      ))}
-                    </Box>
+                    {restaurant.priceRange && (
+                      <Chip label={restaurant.priceRange} size="small" sx={{ mt: 1 }} />
+                    )}
                   </CardContent>
                 </Card>
               </Grid>
@@ -327,4 +189,4 @@ const Restaurants = () => {
   );
 };
 
-export default Restaurants; 
+export default Restaurants;

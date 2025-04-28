@@ -53,6 +53,7 @@ const RestaurantDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [restaurant, setRestaurant] = useState(null);
+  const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState(0);
@@ -63,8 +64,25 @@ const RestaurantDetail = () => {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
 
   useEffect(() => {
-    fetchRestaurant();
+    const fetchRestaurantData = async () => {
+      try {
+        setLoading(true);
+        const resData = await restaurantService.getRestaurantById(id);
+        const menuData = await restaurantService.getRestaurantMenuItems(id);
+        setRestaurant(resData);
+        setMenuItems(menuData);
+        setError(null);
+      } catch (err) {
+        setError('Failed to fetch restaurant details. Please try again later.');
+        console.error('Error fetching restaurant data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    fetchRestaurantData();
   }, [id]);
+  
 
   const fetchRestaurant = async () => {
     try {
@@ -192,6 +210,18 @@ const RestaurantDetail = () => {
     return days.join('\n');
   };
 
+  // Add this function to group menu items by category
+  const getMenuItemsByCategory = () => {
+    const categories = {};
+    menuItems.forEach(item => {
+      if (!categories[item.category]) {
+        categories[item.category] = [];
+      }
+      categories[item.category].push(item);
+    });
+    return categories;
+  };
+
   if (loading) {
     return (
       <Layout>
@@ -208,7 +238,7 @@ const RestaurantDetail = () => {
         <Container>
           <Paper sx={{ p: 3, mt: 3 }}>
             <Typography color="error">{error}</Typography>
-            <Button variant="contained" onClick={fetchRestaurant} sx={{ mt: 2 }}>
+            <Button variant="contained" onClick={() => window.location.reload()} sx={{ mt: 2 }}>
               Retry
             </Button>
           </Paper>
@@ -232,6 +262,8 @@ const RestaurantDetail = () => {
     );
   }
 
+  const menuCategories = getMenuItemsByCategory();
+
   return (
     <Layout cartItems={cartItems}>
       <Box>
@@ -239,7 +271,7 @@ const RestaurantDetail = () => {
         <Box sx={{ position: 'relative', width: '100%', height: { xs: '200px', md: '400px' }, overflow: 'hidden' }}>
           <Box
             component="img"
-            src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
+            src={restaurant.image?.url || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"}
             alt={restaurant.name}
             sx={{
               width: '100%',
@@ -303,24 +335,24 @@ const RestaurantDetail = () => {
                     }
                   }}
                 >
-                  {restaurant.menuCategories?.map((category, index) => (
-                    <Tab label={category.name} key={index} />
+                  {Object.keys(menuCategories).map((category, index) => (
+                    <Tab label={category} key={index} />
                   ))}
                 </Tabs>
 
                 {/* Menu Items */}
                 <Box sx={{ mb: 4 }}>
-                  {restaurant.menuCategories?.map((category, index) => (
+                  {Object.entries(menuCategories).map(([category, items], index) => (
                     <Box
-                      key={category.id}
+                      key={category}
                       role="tabpanel"
                       hidden={activeTab !== index}
                       id={`tabpanel-${index}`}
                     >
                       {activeTab === index && (
                         <List>
-                          {category.items.map((item) => (
-                            <React.Fragment key={item.id}>
+                          {items.map((item) => (
+                            <React.Fragment key={item._id}>
                               <ListItem 
                                 onClick={() => openItemDialog(item)}
                                 sx={{ 
@@ -336,7 +368,7 @@ const RestaurantDetail = () => {
                                     <CardMedia
                                       component="img"
                                       height="100"
-                                      image={item.image || 'https://source.unsplash.com/random/100x100/?food'}
+                                      image={item.image?.url || 'https://source.unsplash.com/random/100x100/?food'}
                                       alt={item.name}
                                       sx={{ borderRadius: 1 }}
                                     />
@@ -347,7 +379,7 @@ const RestaurantDetail = () => {
                                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                       <Typography variant="h6" component="h3">
                                         {item.name}
-                                        {item.popular && (
+                                        {item.isPopular && (
                                           <Chip 
                                             label="Popular" 
                                             size="small" 
@@ -370,6 +402,22 @@ const RestaurantDetail = () => {
                                           {item.preparationTime} mins
                                         </Typography>
                                       </Box>
+                                    )}
+                                    {item.isVegetarian && (
+                                      <Chip 
+                                        label="Vegetarian" 
+                                        size="small" 
+                                        color="success" 
+                                        sx={{ mt: 1, mr: 1 }} 
+                                      />
+                                    )}
+                                    {item.isVegan && (
+                                      <Chip 
+                                        label="Vegan" 
+                                        size="small" 
+                                        color="success" 
+                                        sx={{ mt: 1 }} 
+                                      />
                                     )}
                                   </Box>
                                 </Box>

@@ -1,3 +1,5 @@
+// src/services/restaurant.service.js
+
 import axios from 'axios';
 
 const API_URL = window.env?.REACT_APP_RESTAURANT_SERVICE_URL || 'http://localhost:3001/api';
@@ -37,16 +39,10 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    console.error('API Error Details:', {
+    console.error('API Error:', {
       status: error.response?.status,
-      statusText: error.response?.statusText,
       data: error.response?.data,
-      headers: error.response?.headers,
-      config: {
-        url: error.config?.url,
-        method: error.config?.method,
-        headers: error.config?.headers
-      }
+      url: error.config?.url
     });
     return Promise.reject(error);
   }
@@ -58,85 +54,13 @@ const restaurantService = {
     return response.data;
   },
 
-  getRestaurantsByAdminId: async () => {
-    const response = await api.get('/restaurants/admin/me');
-    return response.data;
-  },
-
   getRestaurantById: async (id) => {
     const response = await api.get(`/restaurants/${id}`);
     return response.data;
   },
 
-  getRestaurantOrders: async (restaurantId) => {
-    const response = await api.get(`/restaurants/${restaurantId}/orders`);
-    return response.data;
-  },
-
-  // Menu Item APIs (updated)
   getRestaurantMenuItems: async (restaurantId) => {
     const response = await api.get(`/menu-items/restaurant/${restaurantId}`);
-    return response.data;
-  },
-
-  createMenuItem: async (restaurantId, menuItemData) => {
-    const response = await api.post('/menu-items', { ...menuItemData, restaurant: restaurantId });
-    return response.data;
-  },
-
-  updateMenuItem: async (restaurantId, menuItemId, menuItemData) => {
-    const response = await api.put(`/menu-items/${menuItemId}`, menuItemData);
-    return response.data;
-  },
-
-  deleteMenuItem: async (restaurantId, menuItemId) => {
-    const response = await api.delete(`/menu-items/${menuItemId}`);
-    return response.data;
-  },
-
-  createRestaurant: async (restaurantData) => {
-    const formattedData = {
-      name: restaurantData.name.trim(),
-      description: restaurantData.description,
-      address: {
-        street: restaurantData.address.street,
-        city: restaurantData.address.city,
-        state: restaurantData.address.state,
-        zipCode: restaurantData.address.zipCode,
-        country: restaurantData.address.country
-      },
-      cuisine: Array.isArray(restaurantData.cuisine) ? restaurantData.cuisine : [restaurantData.cuisine],
-      priceRange: restaurantData.priceRange || 'moderate',
-      contactInfo: {
-        email: restaurantData.contactInfo.email,
-        phone: restaurantData.contactInfo.phone
-      },
-      openingHours: restaurantData.openingHours,
-      deliveryTime: restaurantData.deliveryTime,
-      deliveryFee: restaurantData.deliveryFee,
-      minOrder: restaurantData.minOrder
-    };
-
-    if (!formattedData.name || !formattedData.description || !formattedData.address.street || !formattedData.cuisine.length) {
-      throw new Error('Missing required fields for restaurant creation');
-    }
-
-    const response = await api.post('/restaurants', formattedData);
-    return response.data;
-  },
-
-  updateRestaurant: async (id, restaurantData) => {
-    const response = await api.put(`/restaurants/${id}`, restaurantData);
-    return response.data;
-  },
-
-  deleteRestaurant: async (id) => {
-    const response = await api.delete(`/restaurants/${id}`);
-    return response.data;
-  },
-
-  toggleRestaurantStatus: async (id) => {
-    const response = await api.patch(`/restaurants/${id}/toggle-status`);
     return response.data;
   }
 };
