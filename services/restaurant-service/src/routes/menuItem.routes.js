@@ -30,7 +30,7 @@ router.post(
     body('name').notEmpty().trim(),
     body('description').notEmpty(),
     body('price').isFloat({ min: 0 }),
-    body('category').isIn(['appetizer', 'main', 'dessert', 'beverage', 'side']),
+    body('category').notEmpty().trim(), // Now dynamic category allowed
     body('ingredients').isArray(),
     body('preparationTime').isInt({ min: 1 }),
   ],
@@ -49,6 +49,11 @@ router.post(
  *         required: true
  *         schema:
  *           type: string
+ *       - in: query
+ *         name: category
+ *         schema:
+ *           type: string
+ *         description: Optional category filter
  *     responses:
  *       200:
  *         description: List of menu items
@@ -104,7 +109,7 @@ router.put(
     body('name').optional().trim(),
     body('description').optional(),
     body('price').optional().isFloat({ min: 0 }),
-    body('category').optional().isIn(['appetizer', 'main', 'dessert', 'beverage', 'side']),
+    body('category').optional().trim(), // Dynamic
     body('ingredients').optional().isArray(),
     body('preparationTime').optional().isInt({ min: 1 }),
   ],

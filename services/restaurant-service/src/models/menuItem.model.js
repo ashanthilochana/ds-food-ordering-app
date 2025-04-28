@@ -13,7 +13,8 @@ const menuItemSchema = new mongoose.Schema({
   },
   description: {
     type: String,
-    required: true
+    required: true,
+    trim: true
   },
   price: {
     type: Number,
@@ -23,24 +24,25 @@ const menuItemSchema = new mongoose.Schema({
   category: {
     type: String,
     required: true,
-    enum: ['appetizer', 'main', 'dessert', 'beverage', 'side']
+    trim: true
+    // You can keep enum if you want fixed categories, or remove it to allow free text
+    // enum: ['Appetizer', 'Main', 'Dessert', 'Beverage', 'Side']
   },
   image: {
-    url: String,
-    alt: String
+    url: { type: String },
+    alt: { type: String }
   },
   ingredients: [{
-    type: String,
-    required: true
+    type: String
   }],
   allergens: [{
     type: String
   }],
   nutritionalInfo: {
-    calories: Number,
-    protein: Number,
-    carbohydrates: Number,
-    fats: Number
+    calories: { type: Number },
+    protein: { type: Number },
+    carbohydrates: { type: Number },
+    fats: { type: Number }
   },
   isAvailable: {
     type: Boolean,
@@ -67,7 +69,7 @@ const menuItemSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Indexes for better query performance
+// Indexes for better performance
 menuItemSchema.index({ restaurant: 1, category: 1 });
 menuItemSchema.index({ name: 'text', description: 'text' });
 menuItemSchema.index({ isAvailable: 1 });

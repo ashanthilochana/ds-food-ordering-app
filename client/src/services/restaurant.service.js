@@ -2,14 +2,11 @@ import axios from 'axios';
 
 const API_URL = window.env?.REACT_APP_RESTAURANT_SERVICE_URL || 'http://localhost:3001/api';
 
-// Get token from localStorage
 const getAuthToken = () => {
   const authData = localStorage.getItem('user');
-  console.log('Auth data from localStorage:', authData);
   if (authData) {
     try {
       const parsedData = JSON.parse(authData);
-      console.log('Parsed auth data:', parsedData);
       return parsedData.token;
     } catch (error) {
       console.error('Error parsing auth data:', error);
@@ -19,7 +16,6 @@ const getAuthToken = () => {
   return null;
 };
 
-// Create axios instance with default config
 const api = axios.create({
   baseURL: API_URL,
   headers: {
@@ -27,24 +23,17 @@ const api = axios.create({
   }
 });
 
-// Add request interceptor to add auth token
 api.interceptors.request.use(
   (config) => {
     const token = getAuthToken();
-    console.log('Token retrieved:', token);
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-      console.log('Request headers:', config.headers);
     }
     return config;
   },
-  (error) => {
-    console.error('Request interceptor error:', error);
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Add response interceptor to handle errors
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -64,57 +53,48 @@ api.interceptors.response.use(
 );
 
 const restaurantService = {
-  // Get all restaurants
   getRestaurants: async (filters = {}) => {
     const response = await api.get('/restaurants', { params: filters });
     return response.data;
   },
 
-  // Get restaurants by admin ID
   getRestaurantsByAdminId: async () => {
     const response = await api.get('/restaurants/admin/me');
     return response.data;
   },
 
-  // Get restaurant by ID
   getRestaurantById: async (id) => {
     const response = await api.get(`/restaurants/${id}`);
     return response.data;
   },
 
-  // Get restaurant orders
   getRestaurantOrders: async (restaurantId) => {
     const response = await api.get(`/restaurants/${restaurantId}/orders`);
     return response.data;
   },
 
-  // Get restaurant menu items
+  // Menu Item APIs (updated)
   getRestaurantMenuItems: async (restaurantId) => {
-    const response = await api.get(`/restaurants/${restaurantId}/menu-items`);
+    const response = await api.get(`/menu-items/restaurant/${restaurantId}`);
     return response.data;
   },
 
-  // Create new menu item
   createMenuItem: async (restaurantId, menuItemData) => {
-    const response = await api.post(`/restaurants/${restaurantId}/menu-items`, menuItemData);
+    const response = await api.post('/menu-items', { ...menuItemData, restaurant: restaurantId });
     return response.data;
   },
 
-  // Update menu item
   updateMenuItem: async (restaurantId, menuItemId, menuItemData) => {
-    const response = await api.put(`/restaurants/${restaurantId}/menu-items/${menuItemId}`, menuItemData);
+    const response = await api.put(`/menu-items/${menuItemId}`, menuItemData);
     return response.data;
   },
 
-  // Delete menu item
   deleteMenuItem: async (restaurantId, menuItemId) => {
-    const response = await api.delete(`/restaurants/${restaurantId}/menu-items/${menuItemId}`);
+    const response = await api.delete(`/menu-items/${menuItemId}`);
     return response.data;
   },
 
-  // Create new restaurant
   createRestaurant: async (restaurantData) => {
-    // Transform the data to match backend requirements
     const formattedData = {
       name: restaurantData.name.trim(),
       description: restaurantData.description,
@@ -125,9 +105,7 @@ const restaurantService = {
         zipCode: restaurantData.address.zipCode,
         country: restaurantData.address.country
       },
-      cuisine: Array.isArray(restaurantData.cuisine) 
-        ? restaurantData.cuisine 
-        : [restaurantData.cuisine],
+      cuisine: Array.isArray(restaurantData.cuisine) ? restaurantData.cuisine : [restaurantData.cuisine],
       priceRange: restaurantData.priceRange || 'moderate',
       contactInfo: {
         email: restaurantData.contactInfo.email,
@@ -139,45 +117,28 @@ const restaurantService = {
       minOrder: restaurantData.minOrder
     };
 
-    // Validate required fields
-    if (!formattedData.name) {
-      throw new Error('Restaurant name is required');
-    }
-    if (!formattedData.description) {
-      throw new Error('Restaurant description is required');
-    }
-    if (!formattedData.address || !formattedData.address.street) {
-      throw new Error('Restaurant address is required');
-    }
-    if (!formattedData.cuisine || formattedData.cuisine.length === 0) {
-      throw new Error('At least one cuisine type is required');
-    }
-    if (!['budget', 'moderate', 'expensive', 'luxury'].includes(formattedData.priceRange)) {
-      throw new Error('Invalid price range. Must be one of: budget, moderate, expensive, luxury');
+    if (!formattedData.name || !formattedData.description || !formattedData.address.street || !formattedData.cuisine.length) {
+      throw new Error('Missing required fields for restaurant creation');
     }
 
-    console.log('Sending formatted data:', formattedData);
     const response = await api.post('/restaurants', formattedData);
     return response.data;
   },
 
-  // Update restaurant
   updateRestaurant: async (id, restaurantData) => {
     const response = await api.put(`/restaurants/${id}`, restaurantData);
     return response.data;
   },
 
-  // Delete restaurant
   deleteRestaurant: async (id) => {
     const response = await api.delete(`/restaurants/${id}`);
     return response.data;
   },
 
-  // Toggle restaurant status
   toggleRestaurantStatus: async (id) => {
     const response = await api.patch(`/restaurants/${id}/toggle-status`);
     return response.data;
   }
 };
 
-export default restaurantService; 
+export default restaurantService;

@@ -18,9 +18,7 @@ exports.createMenuItem = async (req, res) => {
     }
 
     // Check if user is the restaurant owner
-    if (restaurant.owner.toString() !== req.user._id) {
-      console.log('Restaurant owner:', restaurant.owner.toString());
-      console.log('User ID:', req.user._id);
+    if (restaurant.owner.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: 'Not authorized - you are not the owner of this restaurant' });
     }
 
@@ -41,26 +39,26 @@ exports.createMenuItem = async (req, res) => {
   }
 };
 
-// Get all menu items with optional filtering
+// Get all menu items for a specific restaurant (with optional filtering)
 exports.getMenuItems = async (req, res) => {
   try {
-    const { category, isAvailable, search } = req.query;
-    
-    const query = {};
+    const { restaurantId } = req.params; // from URL param
+    const { category } = req.query; // optional category filter
 
-    if (category) query.category = category;
-    if (isAvailable !== undefined) query.isAvailable = isAvailable === 'true';
-    if (search) {
-      query.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } }
-      ];
+    if (!restaurantId) {
+      return res.status(400).json({ message: 'Restaurant ID is required' });
+    }
+
+    const query = { restaurant: restaurantId };
+    if (category) {
+      query.category = category;
     }
 
     const menuItems = await MenuItem.find(query).sort({ category: 1, name: 1 });
     res.json(menuItems);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error fetching menu items:', error);
+    res.status(500).json({ message: 'Error fetching menu items' });
   }
 };
 
@@ -97,7 +95,7 @@ exports.updateMenuItem = async (req, res) => {
     if (!restaurant) {
       return res.status(404).json({ message: 'Restaurant not found' });
     }
-    if (restaurant.owner.toString() !== req.user.id) {
+    if (restaurant.owner.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
@@ -131,11 +129,11 @@ exports.deleteMenuItem = async (req, res) => {
     if (!restaurant) {
       return res.status(404).json({ message: 'Restaurant not found' });
     }
-    if (restaurant.owner.toString() !== req.user.id) {
+    if (restaurant.owner.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
-    await MenuItem.findByIdAndDelete(req.params.id);
+    await menuItem.deleteOne();
     res.json({ message: 'Menu item deleted' });
   } catch (error) {
     if (error.name === 'CastError') {
@@ -153,9 +151,8 @@ exports.toggleAvailability = async (req, res) => {
       return res.status(404).json({ message: 'Menu item not found' });
     }
 
-    // Check if user is the restaurant owner
     const restaurant = await Restaurant.findById(menuItem.restaurant);
-    if (restaurant.owner.toString() !== req.user.id) {
+    if (restaurant.owner.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
