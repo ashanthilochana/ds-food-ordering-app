@@ -83,6 +83,13 @@ const RestaurantDetail = () => {
     fetchRestaurantData();
   }, [id]);
   
+  useEffect(() => {
+    // Load cart items from cookie when component mounts
+    const savedCartItems = Cookies.get(CART_COOKIE_NAME);
+    if (savedCartItems) {
+      setCartItems(JSON.parse(savedCartItems));
+    }
+  }, []);
 
   const fetchRestaurant = async () => {
     try {
@@ -136,14 +143,18 @@ const RestaurantDetail = () => {
   };
 
   const addToCart = () => {
+    if (!selectedItem) return;
+
     const newItem = {
-      id: `${selectedItem.id}-${Date.now()}`,
-      menuItemId: selectedItem.id,
+      id: `${selectedItem._id}-${Date.now()}`,
+      menuItemId: selectedItem._id,
       name: selectedItem.name,
       price: selectedItem.price,
       quantity: itemCount,
       options: selectedOptions,
-      total: calculateItemTotal()
+      total: calculateItemTotal(),
+      restaurantId: id,
+      restaurantName: restaurant.name
     };
     
     const updatedCartItems = [...cartItems, newItem];
@@ -164,7 +175,7 @@ const RestaurantDetail = () => {
     
     let total = selectedItem.price * itemCount;
     
-    // Add option prices (simplistic implementation)
+    // Add option prices if any
     Object.values(selectedOptions).forEach(option => {
       const priceMatch = option.match(/\+\$(\d+(\.\d+)?)\)/);
       if (priceMatch) {
@@ -183,7 +194,7 @@ const RestaurantDetail = () => {
     });
     
     // Save restaurant ID to cookie
-    Cookies.set('restaurantId', restaurant._id, {
+    Cookies.set('restaurantId', id, {
       expires: CART_EXPIRY_DAYS,
       path: '/'
     });
@@ -615,7 +626,7 @@ const RestaurantDetail = () => {
               }
             }}
           >
-            View Cart • ${calculateCartTotal()} • {cartItems.reduce((total, item) => total + item.quantity, 0)} items
+            View Cart • ${cartItems.reduce((total, item) => total + item.total, 0).toFixed(2)} • {cartItems.reduce((total, item) => total + item.quantity, 0)} items
           </Button>
         </Box>
       )}

@@ -45,6 +45,9 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../../components/layout/Layout';
+import Cookies from 'js-cookie';
+
+const CART_COOKIE_NAME = 'cartItems';
 
 const Cart = () => {
   const navigate = useNavigate();
@@ -66,8 +69,8 @@ const Cart = () => {
   const [snackbarMessage, setSnackbarMessage] = useState('');
 
   useEffect(() => {
-    // Fetch cart items from localStorage or context
-    const savedCartItems = localStorage.getItem('cartItems');
+    // Load cart items from cookie
+    const savedCartItems = Cookies.get(CART_COOKIE_NAME);
     if (savedCartItems) {
       setCartItems(JSON.parse(savedCartItems));
     }
@@ -80,20 +83,26 @@ const Cart = () => {
         return {
           ...item,
           quantity: newQuantity > 0 ? newQuantity : 1,
-          total: (newQuantity > 0 ? newQuantity : 1) * (item.price)
+          total: (newQuantity > 0 ? newQuantity : 1) * item.price
         };
       }
       return item;
     });
     
     setCartItems(updatedCartItems);
-    localStorage.setItem('cartItems', JSON.stringify(updatedCartItems));
+    Cookies.set(CART_COOKIE_NAME, JSON.stringify(updatedCartItems), {
+      expires: 7,
+      path: '/'
+    });
   };
 
   const handleRemoveItem = (itemId) => {
     const updatedCartItems = cartItems.filter(item => item.id !== itemId);
     setCartItems(updatedCartItems);
-    localStorage.setItem('cartItems', JSON.stringify(updatedCartItems));
+    Cookies.set(CART_COOKIE_NAME, JSON.stringify(updatedCartItems), {
+      expires: 7,
+      path: '/'
+    });
     
     if (updatedCartItems.length === 0) {
       setSnackbarMessage('Your cart is empty!');
@@ -189,7 +198,7 @@ const Cart = () => {
       });
       
       // Clear cart
-      localStorage.removeItem('cartItems');
+      Cookies.remove(CART_COOKIE_NAME);
     }, 2000);
   };
 
@@ -230,7 +239,7 @@ const Cart = () => {
   }
 
   return (
-    <Layout>
+    <Layout cartItems={cartItems}>
       <Container>
         <Box sx={{ my: 4 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
