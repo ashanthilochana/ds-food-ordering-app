@@ -52,19 +52,19 @@ const DeliveryDashboard = () => {
       orderTime: new Date(Date.now() - 30 * 60000).toISOString(),
       estimatedDeliveryTime: new Date(Date.now() + 30 * 60000).toISOString(),
       restaurant: {
-        name: 'Pizza Palace',
-        address: '123 Main St, City',
+        name: 'Mathara Bath Kade',
+        address: '123 colmbo ,Sri lanka',
         phone: '+1 234-567-8901'
       },
       customer: {
-        name: 'John Doe',
-        address: '456 Oak Ave, City',
+        name: 'pathum',
+        address: '456 colombo,Sri lanka',
         phone: '+1 234-567-8902',
         notes: 'Please ring the bell twice'
       },
       items: [
-        { name: 'Margherita Pizza', quantity: 2 },
-        { name: 'Garlic Bread', quantity: 1 }
+        { name: 'Rice and curry', quantity: 2 },
+        { name: 'Kottu', quantity: 1 }
       ],
       totalAmount: 42.98,
       paymentMethod: 'Credit Card'
@@ -76,20 +76,20 @@ const DeliveryDashboard = () => {
       orderTime: new Date(Date.now() - 45 * 60000).toISOString(),
       estimatedDeliveryTime: new Date(Date.now() + 15 * 60000).toISOString(),
       restaurant: {
-        name: 'Burger King',
-        address: '789 Elm St, City',
+        name: 'Pathum Pizza',
+        address: '789 kandy road, Colombo',
         phone: '+1 234-567-8903'
       },
       customer: {
-        name: 'Jane Smith',
-        address: '321 Pine St, City',
+        name: 'pathum',
+        address: '321 kandy road, Colombo',
         phone: '+1 234-567-8904'
       },
       items: [
-        { name: 'Whopper', quantity: 1 },
+        { name: 'Pizza', quantity: 1 },
         { name: 'Fries', quantity: 2 }
       ],
-      totalAmount: 28.97,
+      totalAmount: 280.97,
       paymentMethod: 'Cash'
     },
     {
@@ -100,20 +100,20 @@ const DeliveryDashboard = () => {
       estimatedDeliveryTime: new Date(Date.now() - 30 * 60000).toISOString(),
       deliveredTime: new Date(Date.now() - 25 * 60000).toISOString(),
       restaurant: {
-        name: 'Sushi Master',
-        address: '101 Sushi Ave, City',
+        name: 'Pizza Palace',
+        address: '101 Colombo, City',
         phone: '+1 234-567-8905'
       },
       customer: {
-        name: 'Mike Johnson',
+        name: 'ashan',
         address: '202 Fish St, City',
         phone: '+1 234-567-8906'
       },
       items: [
-        { name: 'California Roll', quantity: 1 },
+        { name: 'mexican pizza', quantity: 1 },
         { name: 'Miso Soup', quantity: 1 }
       ],
-      totalAmount: 35.50,
+      totalAmount: 3500.50,
       paymentMethod: 'Credit Card'
     },
     {
@@ -125,19 +125,19 @@ const DeliveryDashboard = () => {
       cancelReason: 'Customer requested cancellation',
       restaurant: {
         name: 'Taco Bell',
-        address: '303 Taco St, City',
+        address: '303 Malabe,Colombo',
         phone: '+1 234-567-8907'
       },
       customer: {
-        name: 'Sarah Wilson',
-        address: '404 Burrito Ave, City',
+        name: 'pathum',
+        address: '404 malabe,colombo',
         phone: '+1 234-567-8908'
       },
       items: [
-        { name: 'Crunchwrap Supreme', quantity: 1 },
+        { name: 'crunchy taco', quantity: 1 },
         { name: 'Nachos', quantity: 1 }
       ],
-      totalAmount: 22.99,
+      totalAmount: 2200.99,
       paymentMethod: 'Credit Card'
     }
   ]);
@@ -222,7 +222,7 @@ const DeliveryDashboard = () => {
   const handleCloseConfirmationDialog = () => {
     setConfirmationDialogOpen(false);
   };
-
+``
   const handleConfirmAction = () => {
     // Update delivery status based on the action
     const updatedDeliveries = deliveries.map(delivery => {
