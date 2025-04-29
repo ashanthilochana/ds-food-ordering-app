@@ -246,7 +246,7 @@ const Cart = () => {
           console.log('Calling createCheckoutSession...');
           const session = await paymentService.createCheckoutSession(
             orderData.items,
-            `${window.location.origin}/order-success?session_id={CHECKOUT_SESSION_ID}`,
+            `${window.location.origin}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
             `${window.location.origin}/cart`
           );
           console.log('Stripe session response:', session);

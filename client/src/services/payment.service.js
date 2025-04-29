@@ -107,6 +107,15 @@ class PaymentService {
       throw error;
     }
   }
+
+  // Example: Adjust the endpoint to match your backend API
+  async getPaymentBySessionId(sessionId) {
+    const response = await fetch(`/api/payments/session/${sessionId}`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch payment by session ID');
+    }
+    return response.json();
+  }
 }
 
 export default new PaymentService(); 

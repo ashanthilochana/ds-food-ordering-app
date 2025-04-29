@@ -1,24 +1,49 @@
 import React, { useEffect, useState } from 'react';
-import { useLocation, Link } from 'react-router-dom';
+import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { FaCheckCircle } from 'react-icons/fa';
 import paymentService from '../services/payment.service';
 
+function useQuery() {
+  return new URLSearchParams(useLocation().search);
+}
+
 const PaymentSuccess = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const query = useQuery();
   const [payment, setPayment] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Try to get from state first, fallback to query param
   const { orderId, paymentId, amount } = location.state || {};
+  const sessionId = query.get('session_id');
+
+  // Simulate fetching order/payment details
+  // Replace with your actual fetching logic
+  const [order, setOrder] = useState({
+    restaurant: "Dilshan Pathum",
+    paymentMethod: "Online Payment",
+    total: amount || 0,
+    deliveryAddress: "5th mile post, Padaviya, Mahasenpura, Anuradhapura, fgh 50574",
+    items: [{ name: "Burger", quantity: 5, price: 2.5 }]
+  });
 
   useEffect(() => {
     const fetchPaymentDetails = async () => {
-      if (!paymentId) return;
-      
+      setLoading(true);
       try {
-        setLoading(true);
-        const paymentData = await paymentService.getPaymentById(paymentId);
-        setPayment(paymentData);
+        if (paymentId) {
+          // Already have paymentId from state
+          const paymentData = await paymentService.getPaymentById(paymentId);
+          setPayment(paymentData);
+        } else if (sessionId) {
+          // Remove or comment out this block if not needed
+          // const paymentData = await paymentService.getPaymentBySessionId(sessionId);
+          // setPayment(paymentData);
+        } else {
+          setError('No payment information found.');
+        }
       } catch (err) {
         setError(err.message || 'Failed to fetch payment details');
       } finally {
@@ -27,17 +52,7 @@ const PaymentSuccess = () => {
     };
 
     fetchPaymentDetails();
-  }, [paymentId]);
-
-  if (!orderId || !paymentId) {
-    return (
-      <div className="payment-success-container">
-        <h2>Invalid Payment Information</h2>
-        <p>We couldn't find the payment information. Please contact support if you believe this is an error.</p>
-        <Link to="/" className="btn btn-primary">Return to Home</Link>
-      </div>
-    );
-  }
+  }, [paymentId, sessionId]);
 
   if (loading) {
     return (
@@ -58,32 +73,44 @@ const PaymentSuccess = () => {
   }
 
   return (
-    <div className="payment-success-container">
-      <div className="success-icon">
-        <FaCheckCircle size={64} color="#4CAF50" />
-      </div>
-      
-      <h2>Payment Successful!</h2>
-      <p>Thank you for your payment of ${amount.toFixed(2)}</p>
-      
-      {payment && (
-        <div className="payment-details">
-          <h3>Payment Details</h3>
-          <p><strong>Order ID:</strong> {orderId}</p>
-          <p><strong>Payment ID:</strong> {paymentId}</p>
-          <p><strong>Status:</strong> {payment.status}</p>
-          <p><strong>Date:</strong> {new Date(payment.createdAt).toLocaleString()}</p>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: 60 }}>
+      {(!orderId || !paymentId) && (
+        <div style={{ color: 'red', marginBottom: 16 }}>
+          Warning: Some order/payment information is missing.
         </div>
       )}
-      
-      <div className="next-steps">
-        <p>Your order has been confirmed and will be processed shortly.</p>
-        <p>You will receive an email confirmation with your order details.</p>
+      <FaCheckCircle size={100} color="#4CAF50" style={{ marginBottom: 24 }} />
+      <h1 style={{ fontWeight: 'bold' }}>Order Confirmed!</h1>
+      <p>Your order has been placed and is being processed.</p>
+      <div style={{
+        background: '#fff', padding: 32, borderRadius: 16, margin: 24, minWidth: 350, maxWidth: 500, boxShadow: '0 2px 8px #eee'
+      }}>
+        <h2 style={{ color: '#ff5722', textAlign: 'center' }}>Order #{orderId}</h2>
+        <div style={{ display: 'flex', justifyContent: 'space-between', margin: '8px 0' }}>
+          <span>Restaurant</span><span>{order.restaurant}</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', margin: '8px 0' }}>
+          <span>Payment Method</span><span>{order.paymentMethod}</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', margin: '8px 0' }}>
+          <span>Total Amount</span><span>${order.total.toFixed(2)}</span>
+        </div>
+        <div style={{ margin: '8px 0' }}>
+          <span>Delivery Address</span>
+          <div style={{ fontWeight: 'bold' }}>{order.deliveryAddress}</div>
+        </div>
+        <hr />
+        <h3 style={{ textAlign: 'center' }}>Order Items</h3>
+        {order.items.map((item, idx) => (
+          <div key={idx} style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span>{item.quantity}x {item.name}</span>
+            <span>${(item.price * item.quantity).toFixed(2)}</span>
+          </div>
+        ))}
       </div>
-      
-      <div className="actions">
-        <Link to="/orders" className="btn btn-primary">View My Orders</Link>
-        <Link to="/" className="btn btn-secondary">Return to Home</Link>
+      <div style={{ display: 'flex', gap: 16 }}>
+        <Link to="/"><button style={{ padding: '8px 24px', border: '1px solid #ff5722', background: '#fff', color: '#ff5722', borderRadius: 8 }}>Return to Home</button></Link>
+        <button onClick={() => navigate(`/track-order/${orderId}`)} style={{ padding: '8px 24px', background: '#ff5722', color: '#fff', border: 'none', borderRadius: 8 }}>Track Order</button>
       </div>
     </div>
   );

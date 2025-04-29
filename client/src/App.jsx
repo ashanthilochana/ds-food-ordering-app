@@ -4,6 +4,7 @@ import Login from './pages/Login';
 import SignUp from './pages/SignUp';
 import Profile from './pages/Profile';
 import DashboardRouter from './components/DashboardRouter';
+import PaymentSuccess from './pages/PaymentSuccess';
 
 // Customer routes
 import Restaurants from './pages/customer/Restaurants';
@@ -40,6 +41,9 @@ function App() {
       <Route path="/restaurant-orders" element={<OrderManagement />} />
       <Route path="/add-restaurant" element={<AddRestaurant />} />
       <Route path="/restaurant-dashboard/:restaurantId" element={<RestaurantDetailDashboard />} />
+
+      {/* Payment Success Route */}
+      <Route path="/payment-success" element={<PaymentSuccess />} />
     </Routes>
   );
 }
