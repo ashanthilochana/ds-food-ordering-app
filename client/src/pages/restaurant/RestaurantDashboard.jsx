@@ -30,7 +30,8 @@ const RestaurantDashboard = () => {
     const fetchRestaurants = async () => {
       try {
         setLoading(true);
-        const data = await restaurantService.getRestaurantsByAdminId();
+        // 🔵 Correct function call
+        const data = await restaurantService.getMyRestaurants();
         setRestaurants(data);
         setError('');
       } catch (err) {
@@ -129,4 +130,4 @@ const RestaurantDashboard = () => {
   );
 };
 
-export default RestaurantDashboard; 
+export default RestaurantDashboard;

@@ -143,32 +143,37 @@ const RestaurantDetail = () => {
   };
 
   const addToCart = () => {
-    if (!selectedItem) return;
-
     const newItem = {
-      id: `${selectedItem._id}-${Date.now()}`,
-      menuItemId: selectedItem._id,
+      id: `${selectedItem.id}-${Date.now()}`, // Unique cart item ID
+      menuItemId: selectedItem._id,            // Menu item DB ID
       name: selectedItem.name,
       price: selectedItem.price,
       quantity: itemCount,
       options: selectedOptions,
       total: calculateItemTotal(),
-      restaurantId: id,
-      restaurantName: restaurant.name
+      restaurantId: restaurant._id,            // ✅ restaurantId
+      restaurantName: restaurant.name          // ✅ restaurant name
     };
-    
+  
     const updatedCartItems = [...cartItems, newItem];
     setCartItems(updatedCartItems);
-    
-    // Save to cookie
+  
+    // ✅ 1. Save updated cart
     Cookies.set(CART_COOKIE_NAME, JSON.stringify(updatedCartItems), {
       expires: CART_EXPIRY_DAYS,
       path: '/'
     });
-    
+  
+    // ✅ 2. Save restaurantId here
+    Cookies.set('restaurantId', restaurant._id, {
+      expires: CART_EXPIRY_DAYS,
+      path: '/'
+    });
+  
     setSnackbarOpen(true);
     closeItemDialog();
   };
+  
 
   const calculateItemTotal = () => {
     if (!selectedItem) return 0;
@@ -187,20 +192,9 @@ const RestaurantDetail = () => {
   };
 
   const goToCart = () => {
-    // Save the cart to cookie
-    Cookies.set(CART_COOKIE_NAME, JSON.stringify(cartItems), {
-      expires: CART_EXPIRY_DAYS,
-      path: '/'
-    });
-    
-    // Save restaurant ID to cookie
-    Cookies.set('restaurantId', id, {
-      expires: CART_EXPIRY_DAYS,
-      path: '/'
-    });
-    
     navigate('/cart');
   };
+  
 
   const handleCloseSnackbar = () => {
     setSnackbarOpen(false);

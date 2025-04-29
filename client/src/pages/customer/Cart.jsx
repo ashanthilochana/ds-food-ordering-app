@@ -46,6 +46,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import Layout from '../../components/layout/Layout';
 import Cookies from 'js-cookie';
+import orderService from '../../services/order.service'; 
 
 const CART_COOKIE_NAME = 'cartItems';
 
@@ -152,6 +153,10 @@ const Cart = () => {
 
   const handlePaymentChange = (event) => {
     setPaymentMethod(event.target.value);
+    // If cash on delivery is selected, automatically proceed to confirmation
+    if (event.target.value === 'cashOnDelivery') {
+      handleNext();
+    }
   };
 
   const handleNext = () => {
@@ -176,32 +181,51 @@ const Cart = () => {
     setActiveStep((prevStep) => prevStep - 1);
   };
 
-  const handlePlaceOrder = () => {
-    // Simulate payment processing
-    setIsProcessingPayment(true);
-    
-    setTimeout(() => {
-      setIsProcessingPayment(false);
-      setOrderSuccess(true);
-      
-      // Generate fake order details
-      const orderId = Math.floor(100000 + Math.random() * 900000);
-      const estimatedDeliveryTime = new Date();
-      estimatedDeliveryTime.setMinutes(estimatedDeliveryTime.getMinutes() + 45);
-      
-      setOrderDetails({
-        orderId: orderId,
-        estimatedDelivery: estimatedDeliveryTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        restaurant: 'Pizza Palace',
-        total: calculateTotal(),
-        deliveryAddress: `${deliveryAddress.street}, ${deliveryAddress.city}, ${deliveryAddress.state} ${deliveryAddress.zip}`
-      });
-      
-      // Clear cart
-      Cookies.remove(CART_COOKIE_NAME);
-    }, 2000);
-  };
+   // Make sure this import is at top
 
+   const handlePlaceOrder = async () => {
+    try {
+      const user = JSON.parse(localStorage.getItem('user'));
+      const restaurantId = Cookies.get('restaurantId');
+  
+      const orderData = {
+        restaurant: {
+          _id: restaurantId,
+        },
+        items: cartItems.map(item => ({
+          menuItem: {
+            _id: item.menuItemId,
+            name: item.name,
+            price: item.price,
+          },
+          quantity: item.quantity,
+        })),
+        paymentMethod: paymentMethod === 'cashOnDelivery' ? 'cash_on_delivery' : 'card',
+        deliveryAddress: {
+          street: deliveryAddress.street,
+          city: deliveryAddress.city,
+          state: deliveryAddress.state,
+          zipCode: deliveryAddress.zip,
+        },
+        deliveryInstructions: deliveryAddress.instructions || '',
+      };
+  
+      console.log('Order Payload:', JSON.stringify(orderData, null, 2));
+  
+      const responseData = await orderService.placeOrder(orderData);
+      console.log('Order placed successfully:', responseData);
+  
+      // ✅ Add these 3 important steps:
+      setOrderDetails(responseData.order);     // store placed order
+      setOrderSuccess(true);                   // mark order as success
+      setActiveStep(3);                        // move to Confirmation page
+  
+    } catch (error) {
+      console.error('Failed to place order:', error);
+    }
+  };
+  
+  
   const goToHome = () => {
     navigate('/restaurants');
   };
@@ -588,7 +612,7 @@ const Cart = () => {
                     Order Summary
                   </Typography>
                   <Typography variant="body2" color="text.secondary" gutterBottom>
-                    {cartItems.length} {cartItems.length === 1 ? 'item' : 'items'} from Restaurant
+                    {cartItems.length} {cartItems.length === 1 ? 'item' : 'items'} from {cartItems[0]?.restaurantName || 'Restaurant'}
                   </Typography>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                     <Typography variant="body1">Subtotal</Typography>
@@ -623,8 +647,9 @@ const Cart = () => {
                     fullWidth 
                     sx={{ mt: 2 }}
                     onClick={handlePlaceOrder}
+                    disabled={paymentMethod === 'creditCard' || paymentMethod === 'onlinePayment'}
                   >
-                    Place Order
+                    {paymentMethod === 'cashOnDelivery' ? 'Place Order' : 'Proceed to Payment'}
                   </Button>
                 </Paper>
               </Grid>
@@ -637,13 +662,13 @@ const Cart = () => {
               {isProcessingPayment ? (
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', my: 4 }}>
                   <CircularProgress size={60} sx={{ mb: 2 }} />
-                  <Typography variant="h6">Processing your payment...</Typography>
+                  <Typography variant="h6">Processing your order...</Typography>
                   <Typography variant="body2" color="text.secondary">
                     Please don't close this page.
                   </Typography>
                 </Box>
               ) : orderSuccess ? (
-                <Box sx={{ textAlign: 'center', my: 4 }}>
+                <Box sx={{ textAlign: 'center', my: 4, maxWidth: 600, mx: 'auto' }}>
                   <Box 
                     sx={{ 
                       bgcolor: 'success.main', 
@@ -667,7 +692,7 @@ const Cart = () => {
                     Your order has been placed and is being processed.
                   </Typography>
                   
-                  <Card sx={{ maxWidth: 600, mx: 'auto', mb: 4 }}>
+                  <Card sx={{ mb: 4 }}>
                     <CardContent>
                       <Typography variant="h6" color="primary" gutterBottom>
                         Order #{orderDetails?.orderId}
@@ -685,25 +710,52 @@ const Cart = () => {
                           Restaurant
                         </Typography>
                         <Typography variant="body1">
-                          {orderDetails?.restaurant}
+  {orderDetails?.restaurant?.name || '-'}
+</Typography>
+
+                      </Box>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                        <Typography variant="body2" color="text.secondary">
+                          Payment Method
+                        </Typography>
+                        <Typography variant="body1">
+                          {orderDetails?.paymentMethod === 'cashOnDelivery' ? 'Cash on Delivery' : 
+                           orderDetails?.paymentMethod === 'creditCard' ? 'Credit Card' : 
+                           'Online Payment'}
                         </Typography>
                       </Box>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                         <Typography variant="body2" color="text.secondary">
-                          Total
+                          Total Amount
                         </Typography>
                         <Typography variant="body1">
-                          ${orderDetails?.total.toFixed(2)}
-                        </Typography>
+  {orderDetails?.total !== undefined ? `$${orderDetails.total.toFixed(2)}` : '$0.00'}
+</Typography>
+
+
                       </Box>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                         <Typography variant="body2" color="text.secondary">
                           Delivery Address
                         </Typography>
-                        <Typography variant="body1" align="right" sx={{ maxWidth: '60%' }}>
-                          {orderDetails?.deliveryAddress}
-                        </Typography>
+                        {orderDetails?.deliveryAddress
+  ? `${orderDetails.deliveryAddress.street}, ${orderDetails.deliveryAddress.city}, ${orderDetails.deliveryAddress.state} ${orderDetails.deliveryAddress.zipCode}`
+  : '-'}
                       </Box>
+                      <Divider sx={{ my: 2 }} />
+                      <Typography variant="subtitle1" gutterBottom>
+                        Order Items
+                      </Typography>
+                      {orderDetails?.items?.map((item, index) => (
+                        <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                          <Typography variant="body2">
+                            {item.quantity}x {item.name}
+                          </Typography>
+                          <Typography variant="body2">
+                            ${(item.price * item.quantity).toFixed(2)}
+                          </Typography>
+                        </Box>
+                      ))}
                     </CardContent>
                   </Card>
                   
@@ -722,7 +774,36 @@ const Cart = () => {
                     </Button>
                   </Box>
                 </Box>
-              ) : null}
+              ) : (
+                <Box sx={{ textAlign: 'center', my: 4, maxWidth: 600, mx: 'auto' }}>
+                  <Paper sx={{ p: 3 }}>
+                    <Typography variant="h6" gutterBottom>
+                      Review Your Order
+                    </Typography>
+                    <Box sx={{ mb: 3 }}>
+                      <Typography variant="body1" gutterBottom>
+                        Payment Method: {paymentMethod === 'cashOnDelivery' ? 'Cash on Delivery' : 
+                                      paymentMethod === 'creditCard' ? 'Credit Card' : 
+                                      'Online Payment'}
+                      </Typography>
+                      <Typography variant="body1" gutterBottom>
+                        Total Amount: ${calculateTotal().toFixed(2)}
+                      </Typography>
+                      <Typography variant="body1" gutterBottom>
+                        Delivery Address: {deliveryAddress.street}, {deliveryAddress.city}, {deliveryAddress.state} {deliveryAddress.zip}
+                      </Typography>
+                    </Box>
+                    <Button 
+                      variant="contained" 
+                      color="primary" 
+                      fullWidth
+                      onClick={handlePlaceOrder}
+                    >
+                      Place Order
+                    </Button>
+                  </Paper>
+                </Box>
+              )}
             </Box>
           )}
         </Box>

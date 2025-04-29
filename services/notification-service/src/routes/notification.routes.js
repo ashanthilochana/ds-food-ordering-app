@@ -88,4 +88,16 @@ router.patch('/:id/read', authenticate, notificationController.markAsRead);
  */
 router.delete('/:id', authenticate, notificationController.deleteNotification);
 
+router.post('/new-order', (req, res) => {
+    const { orderId, restaurantId, type } = req.body;
+  
+    console.log('🚀 New Order Notification Received');
+    console.log('Order ID:', orderId);
+    console.log('Restaurant ID:', restaurantId);
+    console.log('Type:', type);
+  
+    res.status(200).json({ message: 'New Order Notification Processed' });
+  });
+  
+
 module.exports = router;

@@ -169,13 +169,14 @@ const RestaurantDetailDashboard = () => {
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', gap: 2 }}>
-            <Button
-              variant="contained"
-              startIcon={<OrderIcon />}
-              onClick={() => navigate('/restaurant-orders')}
-            >
-              Manage Orders
-            </Button>
+          <Button
+  variant="contained"
+  startIcon={<OrderIcon />}
+  onClick={() => navigate(`/restaurant-orders?restaurantId=${restaurantId}`)}
+>
+  Manage Orders
+</Button>
+
             <Button
               variant="contained"
               startIcon={<MenuIcon />}

@@ -48,4 +48,13 @@ router.post(
   orderController.cancelOrder
 );
 
+// Get restaurant orders
+router.get(
+  '/restaurant',
+  auth,
+  isRestaurantOwner,
+  orderController.getOrdersByRestaurant
+);
+
+
 module.exports = router;

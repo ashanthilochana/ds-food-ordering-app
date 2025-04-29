@@ -55,30 +55,33 @@ const MenuManagement = () => {
       setSnackbar({ open: true, message: 'Name and Category are required.', severity: 'error' });
       return;
     }
-
+  
     try {
       if (currentItem._id) {
-        await restaurantService.updateMenuItem(restaurantId, currentItem._id, currentItem);
-        const updatedItems = menuItems.map(item => item._id === currentItem._id ? currentItem : item);
+        // UPDATE existing menu item
+        const updatedItem = await restaurantService.updateMenuItem(currentItem._id, currentItem);
+        const updatedItems = menuItems.map(item => item._id === currentItem._id ? updatedItem : item);
         setMenuItems(updatedItems);
         setSnackbar({ open: true, message: 'Menu item updated.', severity: 'success' });
       } else {
+        // CREATE new menu item
         const newItemPayload = {
           ...currentItem,
           restaurant: restaurantId,
           ingredients: [],
           preparationTime: 10
         };
-        const newItem = await restaurantService.createMenuItem(restaurantId, newItemPayload);
+        const newItem = await restaurantService.createMenuItem(newItemPayload);
         setMenuItems([...menuItems, newItem]);
         setSnackbar({ open: true, message: 'Menu item added.', severity: 'success' });
       }
       setOpenItemDialog(false);
     } catch (err) {
+      console.error('Error saving menu item:', err);
       setSnackbar({ open: true, message: 'Failed to save menu item.', severity: 'error' });
     }
   };
-
+  
   const handleDeleteItem = async (itemId) => {
     try {
       await restaurantService.deleteMenuItem(restaurantId, itemId);

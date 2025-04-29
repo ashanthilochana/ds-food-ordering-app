@@ -49,6 +49,17 @@ api.interceptors.response.use(
 );
 
 const restaurantService = {
+  // 🔵 NEW function: Create a restaurant
+  createRestaurant: async (restaurantData) => {
+    const response = await api.post('/restaurants', restaurantData);
+    return response.data;
+  },
+
+  getMyRestaurants: async () => {
+    const response = await api.get('/restaurants/admin/me');
+    return response.data;
+  },
+
   getRestaurants: async (filters = {}) => {
     const response = await api.get('/restaurants', { params: filters });
     return response.data;
@@ -62,7 +73,31 @@ const restaurantService = {
   getRestaurantMenuItems: async (restaurantId) => {
     const response = await api.get(`/menu-items/restaurant/${restaurantId}`);
     return response.data;
-  }
+  },
+
+  createMenuItem: async (menuItemData) => {
+    const response = await api.post('/menu-items', menuItemData);
+    return response.data;
+  },
+
+  updateMenuItem: async (menuItemId, menuItemData) => {
+    const response = await api.put(`/menu-items/${menuItemId}`, menuItemData);
+    return response.data;
+  },
+
+  deleteMenuItem: async (menuItemId) => {
+    const response = await api.delete(`/menu-items/${menuItemId}`);
+    return response.data;
+  },
+
+  getRestaurantMenuItems: async (restaurantId) => {
+    const response = await api.get(`/menu-items/restaurant/${restaurantId}`);
+    return response.data;
+  },
+
+
 };
+
+
 
 export default restaurantService;

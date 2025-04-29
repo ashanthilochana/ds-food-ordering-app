@@ -1,6 +1,7 @@
 const Order = require('../models/order.model');
 const { validationResult } = require('express-validator');
 const axios = require('axios');
+const mongoose = require('mongoose'); 
 
 const RESTAURANT_SERVICE_URL = process.env.RESTAURANT_SERVICE_URL || 'http://localhost:3001';
 const NOTIFICATION_SERVICE_URL = process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:3006';
@@ -8,9 +9,26 @@ const NOTIFICATION_SERVICE_URL = process.env.NOTIFICATION_SERVICE_URL || 'http:/
 // Create a new order
 exports.createOrder = async (req, res) => {
   try {
+    // Validate request body
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
+    }
+
+    // Check if user is authenticated and has customer role
+    if (!req.user || req.user.role !== 'customer') {
+      console.error('Role check failed in createOrder:', {
+        userId: req.user?._id,
+        role: req.user?.role,
+        expectedRole: 'customer'
+      });
+      return res.status(403).json({ 
+        message: 'Access denied. Only customers can place orders.',
+        details: {
+          expectedRole: 'customer',
+          currentRole: req.user?.role
+        }
+      });
     }
 
     // Verify restaurant and menu items with Restaurant Service
@@ -23,7 +41,11 @@ exports.createOrder = async (req, res) => {
       // Add restaurant details to order
       req.body.restaurant.name = restaurantResponse.data.name;
     } catch (error) {
-      return res.status(404).json({ message: 'Restaurant not found or not accessible' });
+      console.error('Restaurant verification failed:', error.message);
+      return res.status(404).json({ 
+        message: 'Restaurant not found or not accessible',
+        details: error.response?.data || error.message
+      });
     }
 
     // Add customer details from authenticated user
@@ -40,8 +62,11 @@ exports.createOrder = async (req, res) => {
 
     const order = new Order({
       ...req.body,
-      totalAmount
+      totalAmount,
+      status: 'pending',
+      createdAt: new Date()
     });
+
     await order.save();
 
     // Notify restaurant about new order
@@ -56,9 +81,25 @@ exports.createOrder = async (req, res) => {
       // Don't fail the order creation if notification fails
     }
 
-    res.status(201).json(order);
+    res.status(201).json({
+      message: 'Order created successfully',
+      order: {
+        _id: order._id,
+        status: order.status,
+        totalAmount: order.totalAmount,
+        restaurant: order.restaurant,
+        items: order.items,
+        deliveryAddress: order.deliveryAddress,
+        paymentMethod: order.paymentMethod,
+        createdAt: order.createdAt
+      }
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error creating order:', error);
+    res.status(500).json({ 
+      message: 'Error creating order',
+      details: error.message
+    });
   }
 };
 
@@ -100,14 +141,66 @@ exports.getOrders = async (req, res) => {
 
     res.json(orders);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error getting orders:', error);
+    res.status(500).json({ 
+      message: 'Error getting orders',
+      details: error.message
+    });
   }
 };
 
-// Get order by ID
+
+exports.getOrdersByRestaurant = async (req, res) => {
+  try {
+    const { restaurantId } = req.query;
+
+    if (!restaurantId || !mongoose.Types.ObjectId.isValid(restaurantId)) {
+      return res.status(400).json({ message: 'Invalid Restaurant ID' });
+    }
+
+    // ✅ Authorization Check: Ensure restaurantId matches logged-in user's restaurantId
+    if (req.user.role !== 'restaurant_admin' || req.user.restaurantId !== restaurantId) {
+      return res.status(403).json({ 
+        message: 'Access denied. You are not authorized for this restaurant.',
+        details: {
+          userRestaurantId: req.user.restaurantId,
+          requestedRestaurantId: restaurantId
+        }
+      });
+    }
+
+    const orders = await Order.find({
+      'restaurant._id': new mongoose.Types.ObjectId(restaurantId)
+    }).sort({ createdAt: -1 });
+
+    res.status(200).json(orders);
+
+  } catch (error) {
+    console.error('Error fetching restaurant orders:', {
+      restaurantId,
+      error: error.message
+    });
+    res.status(500).json({ 
+      message: 'Failed to fetch restaurant orders',
+      details: error.message
+    });
+  }
+};
+
+
+
+// At top, if not already
+
 exports.getOrderById = async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id);
+    const { id } = req.params;
+
+    // ✅ Add this check
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid Order ID' });
+    }
+
+    const order = await Order.findById(id);
     if (!order) {
       return res.status(404).json({ message: 'Order not found' });
     }
@@ -123,7 +216,11 @@ exports.getOrderById = async (req, res) => {
 
     res.json(order);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error getting order:', error);
+    res.status(500).json({ 
+      message: 'Error getting order',
+      details: error.message
+    });
   }
 };
 
@@ -142,7 +239,13 @@ exports.updateOrderStatus = async (req, res) => {
 
     // Check authorization
     if (req.user.role === 'restaurant_admin' && order.restaurant._id.toString() !== req.user.restaurantId) {
-      return res.status(403).json({ message: 'Not authorized to update this order' });
+      return res.status(403).json({ 
+        message: 'Not authorized to update this order',
+        details: {
+          restaurantId: req.user.restaurantId,
+          orderRestaurantId: order.restaurant._id
+        }
+      });
     }
 
     // Validate status transition
@@ -156,7 +259,12 @@ exports.updateOrderStatus = async (req, res) => {
 
     if (!validTransitions[order.status]?.includes(req.body.status)) {
       return res.status(400).json({ 
-        message: `Invalid status transition from ${order.status} to ${req.body.status}` 
+        message: `Invalid status transition from ${order.status} to ${req.body.status}`,
+        details: {
+          currentStatus: order.status,
+          attemptedStatus: req.body.status,
+          validTransitions: validTransitions[order.status]
+        }
       });
     }
 
@@ -184,9 +292,20 @@ exports.updateOrderStatus = async (req, res) => {
       console.error('Error sending notification:', error);
     }
 
-    res.json(order);
+    res.json({
+      message: 'Order status updated successfully',
+      order: {
+        _id: order._id,
+        status: order.status,
+        updatedAt: order.updatedAt
+      }
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error updating order status:', error);
+    res.status(500).json({ 
+      message: 'Error updating order status',
+      details: error.message
+    });
   }
 };
 
@@ -201,17 +320,33 @@ exports.cancelOrder = async (req, res) => {
     // Only allow cancellation of pending or confirmed orders
     if (!['pending', 'confirmed'].includes(order.status)) {
       return res.status(400).json({ 
-        message: 'Cannot cancel order in current status' 
+        message: 'Cannot cancel order in current status',
+        details: {
+          currentStatus: order.status,
+          allowedStatuses: ['pending', 'confirmed']
+        }
       });
     }
 
     // Check authorization
     if (req.user.role === 'customer' && order.customer._id.toString() !== req.user._id) {
-      return res.status(403).json({ message: 'Not authorized to cancel this order' });
+      return res.status(403).json({ 
+        message: 'Not authorized to cancel this order',
+        details: {
+          userId: req.user._id,
+          orderCustomerId: order.customer._id
+        }
+      });
     }
 
     if (req.user.role === 'restaurant_admin' && order.restaurant._id.toString() !== req.user.restaurantId) {
-      return res.status(403).json({ message: 'Not authorized to cancel this order' });
+      return res.status(403).json({ 
+        message: 'Not authorized to cancel this order',
+        details: {
+          restaurantId: req.user.restaurantId,
+          orderRestaurantId: order.restaurant._id
+        }
+      });
     }
 
     order.status = 'cancelled';
@@ -231,8 +366,19 @@ exports.cancelOrder = async (req, res) => {
       console.error('Error sending notification:', error);
     }
 
-    res.json(order);
+    res.json({
+      message: 'Order cancelled successfully',
+      order: {
+        _id: order._id,
+        status: order.status,
+        cancellationReason: order.cancellationReason
+      }
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error cancelling order:', error);
+    res.status(500).json({ 
+      message: 'Error cancelling order',
+      details: error.message
+    });
   }
 };

@@ -29,34 +29,114 @@ const auth = async (req, res, next) => {
 
 // Check if user is a customer
 const isCustomer = async (req, res, next) => {
-  if (!req.user || req.user.role !== 'customer') {
-    return res.status(403).json({ message: 'Access denied. Not a customer.' });
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: 'User not authenticated' });
+    }
+    
+    if (req.user.role !== 'customer') {
+      console.error('Role check failed:', {
+        expected: 'customer',
+        received: req.user.role,
+        userId: req.user._id
+      });
+      return res.status(403).json({ 
+        message: 'Access denied. Not a customer.',
+        details: {
+          expectedRole: 'customer',
+          currentRole: req.user.role
+        }
+      });
+    }
+    next();
+  } catch (error) {
+    console.error('isCustomer middleware error:', error);
+    res.status(500).json({ message: 'Error checking customer role' });
   }
-  next();
 };
 
 // Check if user is restaurant owner
 const isRestaurantOwner = async (req, res, next) => {
-  if (!req.user || req.user.role !== 'restaurant_admin') {
-    return res.status(403).json({ message: 'Access denied. Not a restaurant owner.' });
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: 'User not authenticated' });
+    }
+    
+    if (req.user.role !== 'restaurant_admin') {
+      console.error('Role check failed:', {
+        expected: 'restaurant_admin',
+        received: req.user.role,
+        userId: req.user._id
+      });
+      return res.status(403).json({ 
+        message: 'Access denied. Not a restaurant owner.',
+        details: {
+          expectedRole: 'restaurant_admin',
+          currentRole: req.user.role
+        }
+      });
+    }
+    next();
+  } catch (error) {
+    console.error('isRestaurantOwner middleware error:', error);
+    res.status(500).json({ message: 'Error checking restaurant owner role' });
   }
-  next();
 };
 
 // Check if user is delivery person
 const isDeliveryPerson = async (req, res, next) => {
-  if (!req.user || req.user.role !== 'delivery_person') {
-    return res.status(403).json({ message: 'Access denied. Not a delivery person.' });
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: 'User not authenticated' });
+    }
+    
+    if (req.user.role !== 'delivery_person') {
+      console.error('Role check failed:', {
+        expected: 'delivery_person',
+        received: req.user.role,
+        userId: req.user._id
+      });
+      return res.status(403).json({ 
+        message: 'Access denied. Not a delivery person.',
+        details: {
+          expectedRole: 'delivery_person',
+          currentRole: req.user.role
+        }
+      });
+    }
+    next();
+  } catch (error) {
+    console.error('isDeliveryPerson middleware error:', error);
+    res.status(500).json({ message: 'Error checking delivery person role' });
   }
-  next();
 };
 
 // Check if user is admin
 const isAdmin = async (req, res, next) => {
-  if (!req.user || req.user.role !== 'admin') {
-    return res.status(403).json({ message: 'Access denied. Not an admin.' });
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: 'User not authenticated' });
+    }
+    
+    if (req.user.role !== 'admin') {
+      console.error('Role check failed:', {
+        expected: 'admin',
+        received: req.user.role,
+        userId: req.user._id
+      });
+      return res.status(403).json({ 
+        message: 'Access denied. Not an admin.',
+        details: {
+          expectedRole: 'admin',
+          currentRole: req.user.role
+        }
+      });
+    }
+    next();
+  } catch (error) {
+    console.error('isAdmin middleware error:', error);
+    res.status(500).json({ message: 'Error checking admin role' });
   }
-  next();
 };
 
 module.exports = {
