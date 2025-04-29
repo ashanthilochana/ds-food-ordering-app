@@ -42,8 +42,105 @@ import {
 import Layout from '../../components/layout/Layout';
 
 const DeliveryDashboard = () => {
-  const [loading, setLoading] = useState(true);
-  const [deliveries, setDeliveries] = useState([]);
+  const [loading, setLoading] = useState(false);
+  // TODO: Replace with backend data fetching
+  const [deliveries, setDeliveries] = useState([
+    {
+      id: '1',
+      orderId: 'ORD001',
+      status: 'assigned',
+      orderTime: new Date(Date.now() - 30 * 60000).toISOString(),
+      estimatedDeliveryTime: new Date(Date.now() + 30 * 60000).toISOString(),
+      restaurant: {
+        name: 'Pizza Palace',
+        address: '123 Main St, City',
+        phone: '+1 234-567-8901'
+      },
+      customer: {
+        name: 'John Doe',
+        address: '456 Oak Ave, City',
+        phone: '+1 234-567-8902',
+        notes: 'Please ring the bell twice'
+      },
+      items: [
+        { name: 'Margherita Pizza', quantity: 2 },
+        { name: 'Garlic Bread', quantity: 1 }
+      ],
+      totalAmount: 42.98,
+      paymentMethod: 'Credit Card'
+    },
+    {
+      id: '2',
+      orderId: 'ORD002',
+      status: 'picked_up',
+      orderTime: new Date(Date.now() - 45 * 60000).toISOString(),
+      estimatedDeliveryTime: new Date(Date.now() + 15 * 60000).toISOString(),
+      restaurant: {
+        name: 'Burger King',
+        address: '789 Elm St, City',
+        phone: '+1 234-567-8903'
+      },
+      customer: {
+        name: 'Jane Smith',
+        address: '321 Pine St, City',
+        phone: '+1 234-567-8904'
+      },
+      items: [
+        { name: 'Whopper', quantity: 1 },
+        { name: 'Fries', quantity: 2 }
+      ],
+      totalAmount: 28.97,
+      paymentMethod: 'Cash'
+    },
+    {
+      id: '3',
+      orderId: 'ORD003',
+      status: 'delivered',
+      orderTime: new Date(Date.now() - 120 * 60000).toISOString(),
+      estimatedDeliveryTime: new Date(Date.now() - 30 * 60000).toISOString(),
+      deliveredTime: new Date(Date.now() - 25 * 60000).toISOString(),
+      restaurant: {
+        name: 'Sushi Master',
+        address: '101 Sushi Ave, City',
+        phone: '+1 234-567-8905'
+      },
+      customer: {
+        name: 'Mike Johnson',
+        address: '202 Fish St, City',
+        phone: '+1 234-567-8906'
+      },
+      items: [
+        { name: 'California Roll', quantity: 1 },
+        { name: 'Miso Soup', quantity: 1 }
+      ],
+      totalAmount: 35.50,
+      paymentMethod: 'Credit Card'
+    },
+    {
+      id: '4',
+      orderId: 'ORD004',
+      status: 'cancelled',
+      orderTime: new Date(Date.now() - 90 * 60000).toISOString(),
+      estimatedDeliveryTime: new Date(Date.now() - 30 * 60000).toISOString(),
+      cancelReason: 'Customer requested cancellation',
+      restaurant: {
+        name: 'Taco Bell',
+        address: '303 Taco St, City',
+        phone: '+1 234-567-8907'
+      },
+      customer: {
+        name: 'Sarah Wilson',
+        address: '404 Burrito Ave, City',
+        phone: '+1 234-567-8908'
+      },
+      items: [
+        { name: 'Crunchwrap Supreme', quantity: 1 },
+        { name: 'Nachos', quantity: 1 }
+      ],
+      totalAmount: 22.99,
+      paymentMethod: 'Credit Card'
+    }
+  ]);
   const [tabValue, setTabValue] = useState(0);
   const [selectedDelivery, setSelectedDelivery] = useState(null);
   const [deliveryDetailOpen, setDeliveryDetailOpen] = useState(false);
@@ -52,32 +149,33 @@ const DeliveryDashboard = () => {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [refreshing, setRefreshing] = useState(false);
 
-  // Fetch deliveries from backend
-  const fetchDeliveries = async () => {
-    setLoading(true);
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/deliveries/my-deliveries', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-      if (!response.ok) throw new Error('Failed to fetch deliveries');
-      const data = await response.json();
-      setDeliveries(data);
-    } catch (error) {
-      setSnackbar({
-        open: true,
-        message: 'Failed to fetch deliveries',
-        severity: 'error'
-      });
-    }
-    setLoading(false);
-  };
+  // TODO: Restore backend data fetching
+  // const fetchDeliveries = async () => {
+  //   setLoading(true);
+  //   try {
+  //     const token = localStorage.getItem('token');
+  //     const response = await fetch('/api/deliveries/my-deliveries', {
+  //       headers: {
+  //         'Authorization': `Bearer ${token}`,
+  //       },
+  //     });
+  //     if (!response.ok) throw new Error('Failed to fetch deliveries');
+  //     const data = await response.json();
+  //     setDeliveries(data);
+  //   } catch (error) {
+  //     setSnackbar({
+  //       open: true,
+  //       message: 'Failed to fetch deliveries',
+  //       severity: 'error'
+  //     });
+  //   }
+  //   setLoading(false);
+  // };
 
-  useEffect(() => {
-    fetchDeliveries();
-  }, []);
+  // TODO: Restore useEffect for data fetching
+  // useEffect(() => {
+  //   fetchDeliveries();
+  // }, []);
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
@@ -85,14 +183,25 @@ const DeliveryDashboard = () => {
 
   const handleRefresh = () => {
     setRefreshing(true);
-    fetchDeliveries().then(() => {
+    // TODO: Restore backend refresh
+    // fetchDeliveries().then(() => {
+    //   setRefreshing(false);
+    //   setSnackbar({
+    //     open: true,
+    //     message: 'Deliveries refreshed',
+    //     severity: 'success'
+    //   });
+    // });
+    
+    // Temporary local refresh simulation
+    setTimeout(() => {
       setRefreshing(false);
       setSnackbar({
         open: true,
         message: 'Deliveries refreshed',
         severity: 'success'
       });
-    });
+    }, 1000);
   };
 
   const handleOpenDeliveryDetail = (delivery) => {
