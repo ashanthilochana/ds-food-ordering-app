@@ -8,6 +8,20 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import Layout from '../../components/layout/Layout';
 import restaurantService from '../../services/restaurant.service';
 
+// Predefined menu categories
+const MENU_CATEGORIES = [
+  'Pizza',
+  'Pasta',
+  'Burger',
+  'Sushi',
+  'Rice',
+  'Noodles',
+  'Salad',
+  'Soup',
+  'Dessert',
+  'Drink'
+];
+
 const MenuManagement = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -178,14 +192,20 @@ const MenuManagement = () => {
             onChange={(e) => setCurrentItem({ ...currentItem, price: parseFloat(e.target.value) })}
             required
           />
-          <TextField
-            margin="dense"
-            label="Category"
-            fullWidth
-            value={currentItem?.category || ''}
-            onChange={(e) => setCurrentItem({ ...currentItem, category: e.target.value })}
-            required
-          />
+          <FormControl fullWidth margin="dense" required>
+            <InputLabel>Category</InputLabel>
+            <Select
+              value={currentItem?.category || ''}
+              label="Category"
+              onChange={(e) => setCurrentItem({ ...currentItem, category: e.target.value })}
+            >
+              {MENU_CATEGORIES.map((category) => (
+                <MenuItem key={category} value={category}>
+                  {category}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
           <TextField
             margin="dense"
             label="Description"

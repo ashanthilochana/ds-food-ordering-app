@@ -46,6 +46,28 @@ import Layout from '../../components/layout/Layout';
 import Cookies from 'js-cookie';
 import restaurantService from '../../services/restaurant.service';
 
+// Default images for different menu categories
+const MENU_CATEGORY_IMAGES = {
+  'pizza': 'https://images.unsplash.com/photo-1513104890138-7c749659a591?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1974&q=80',
+  'pasta': 'https://images.unsplash.com/photo-1555949258-eb67b1ef0ceb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1974&q=80',
+  'burger': 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1974&q=80',
+  'sushi': 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1974&q=80',
+  'rice': 'https://images.unsplash.com/photo-1512058564366-18510be2db19?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1974&q=80',
+  'noodles': 'https://images.unsplash.com/photo-1551183053-bf91a1d81141?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1974&q=80',
+  'salad': 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1974&q=80',
+  'soup': 'https://images.unsplash.com/photo-1547592166-23ac45744acd?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1974&q=80',
+  'dessert': 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1974&q=80',
+  'drink': 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1974&q=80',
+  'default': 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1974&q=80'
+};
+
+const getCategoryImage = (category) => {
+  if (!category) return MENU_CATEGORY_IMAGES.default;
+  
+  const normalizedCategory = category.toLowerCase();
+  return MENU_CATEGORY_IMAGES[normalizedCategory] || MENU_CATEGORY_IMAGES.default;
+};
+
 const CART_COOKIE_NAME = 'cartItems';
 const CART_EXPIRY_DAYS = 7;
 
@@ -373,9 +395,16 @@ const RestaurantDetail = () => {
                                     <CardMedia
                                       component="img"
                                       height="100"
-                                      image={item.image?.url || 'https://source.unsplash.com/random/100x100/?food'}
+                                      image={item.image?.url || getCategoryImage(item.category)}
                                       alt={item.name}
-                                      sx={{ borderRadius: 1 }}
+                                      sx={{ 
+                                        borderRadius: 1,
+                                        objectFit: 'cover',
+                                        transition: 'transform 0.3s ease-in-out',
+                                        '&:hover': {
+                                          transform: 'scale(1.05)'
+                                        }
+                                      }}
                                     />
                                   </Box>
                                   
