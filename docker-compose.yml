@@ -1,11 +1,80 @@
 version: '3.8'
 services:
-  restaurant-service:
-    build: ./services/restaurant-service
+  client:
+    build: ./client
     ports:
-      - "3001:3001"
+      - "80:80"
+    depends_on:
+      - auth-service
+      - restaurant-service
+      - order-service
+      - delivery-service
+      - payment-service
+      - notification-service
+
+  auth-service:
+    build: 
+      context: ./services/auth-service
+      dockerfile: Dockerfile.base
+    ports:
+      - "3000:8000"
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/auth_db
+    depends_on:
+      - mongodb
+
+  restaurant-service:
+    build: 
+      context: ./services/restaurant-service
+      dockerfile: Dockerfile.base
+    ports:
+      - "3001:8000"
     environment:
       - MONGODB_URI=mongodb://mongodb:27017/restaurant_db
+    depends_on:
+      - mongodb
+
+  order-service:
+    build: 
+      context: ./services/order-service
+      dockerfile: Dockerfile.base
+    ports:
+      - "3002:8000"
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/order_db
+    depends_on:
+      - mongodb
+
+  delivery-service:
+    build: 
+      context: ./services/delivery-service
+      dockerfile: Dockerfile.base
+    ports:
+      - "3003:8000"
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/delivery_db
+    depends_on:
+      - mongodb
+
+  payment-service:
+    build: 
+      context: ./services/payment-service
+      dockerfile: Dockerfile.base
+    ports:
+      - "3004:8000"
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/payment_db
+    depends_on:
+      - mongodb
+
+  notification-service:
+    build: 
+      context: ./services/notification-service
+      dockerfile: Dockerfile.base
+    ports:
+      - "3005:8000"
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/notification_db
     depends_on:
       - mongodb
 
