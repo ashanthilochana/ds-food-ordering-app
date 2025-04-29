@@ -1,12 +1,19 @@
 const express = require('express');
 const router = express.Router();
 const paymentController = require('../controllers/payment.controller');
-const { auth, isCustomer } = require('../middleware/auth.middleware');
+const { auth, isCustomer, isAdmin } = require('../middleware/auth.middleware');
 const {
   createPaymentIntentValidation,
   confirmPaymentValidation,
-  refundPaymentValidation
+  refundPaymentValidation,
+  partialRefundValidation
 } = require('../middleware/validation.middleware');
+
+// Get Stripe publishable key
+router.get(
+  '/config',
+  paymentController.getPublishableKey
+);
 
 // Create payment intent
 router.post(
@@ -40,12 +47,45 @@ router.get(
   paymentController.getPayments
 );
 
-// Refund payment
+// Full refund payment
 router.post(
   '/refund',
   auth,
+  isAdmin,
   refundPaymentValidation,
   paymentController.refundPayment
+);
+
+// Partial refund payment
+router.post(
+  '/partial-refund',
+  auth,
+  isAdmin,
+  partialRefundValidation,
+  paymentController.partialRefund
+);
+
+// Retry failed payment
+router.post(
+  '/:paymentId/retry',
+  auth,
+  isCustomer,
+  paymentController.retryPayment
+);
+
+// Stripe webhook endpoint
+router.post(
+  '/webhook',
+  express.raw({ type: 'application/json' }),
+  paymentController.handleWebhook
+);
+
+// Create checkout session
+router.post(
+  '/create-checkout-session',
+  auth,
+  isCustomer,
+  paymentController.createCheckoutSession
 );
 
 module.exports = router;

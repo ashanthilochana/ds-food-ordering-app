@@ -44,11 +44,34 @@ import {
   Check as CheckIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { loadStripe } from '@stripe/stripe-js';
 import Layout from '../../components/layout/Layout';
 import Cookies from 'js-cookie';
-import orderService from '../../services/order.service'; 
+import orderService from '../../services/order.service';
+import paymentService from '../../services/payment.service';
+
+// Initialize Stripe with the public key directly
+const stripePromise = loadStripe('pk_test_51RIwgR4bmLkJuViK9uTGTNjshP1Aq53jwMe0OWHL4eLxB9PlbHOnCwOlc14GvOfwjaLiLGfPD1eLpzD3phFqTGZU00NKo1uVsq');
 
 const CART_COOKIE_NAME = 'cartItems';
+
+// Create a Stripe Checkout Session by calling your backend
+const createStripeSession = async (orderData) => {
+  try {
+    const response = await fetch('/api/create-checkout-session', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(orderData),
+    });
+    if (!response.ok) throw new Error('Failed to create Stripe session');
+    return await response.json();
+  } catch (error) {
+    console.error('Error creating Stripe session:', error);
+    throw error;
+  }
+};
 
 const Cart = () => {
   const navigate = useNavigate();
@@ -181,11 +204,16 @@ const Cart = () => {
     setActiveStep((prevStep) => prevStep - 1);
   };
 
-   // Make sure this import is at top
-
-   const handlePlaceOrder = async () => {
+  const handlePlaceOrder = async () => {
     try {
       const user = JSON.parse(localStorage.getItem('user'));
+      console.log('User from localStorage:', user);
+      if (user && user.token) {
+        paymentService.setAuthToken(user.token);
+        console.log('Set auth token:', user.token);
+      } else {
+        console.warn('No user or token found!');
+      }
       const restaurantId = Cookies.get('restaurantId');
   
       const orderData = {
@@ -208,23 +236,50 @@ const Cart = () => {
           zipCode: deliveryAddress.zip,
         },
         deliveryInstructions: deliveryAddress.instructions || '',
+        total: calculateTotal(),
       };
+
+      console.log('Order data for checkout:', orderData);
+
+      if (paymentMethod === 'creditCard') {
+        try {
+          console.log('Calling createCheckoutSession...');
+          const session = await paymentService.createCheckoutSession(
+            orderData.items,
+            `${window.location.origin}/order-success?session_id={CHECKOUT_SESSION_ID}`,
+            `${window.location.origin}/cart`
+          );
+          console.log('Stripe session response:', session);
+          const stripe = await stripePromise;
+          const { error } = await stripe.redirectToCheckout({ sessionId: session.id });
+          if (error) {
+            setSnackbarMessage('Payment failed. Please try again.');
+            setSnackbarOpen(true);
+          }
+          return;
+        } catch (error) {
+          console.error('Error in createCheckoutSession:', error);
+          setSnackbarMessage('Payment failed. Please try again.');
+          setSnackbarOpen(true);
+          return;
+        }
+      }
   
+      // For non-credit card payments (cash on delivery)
       console.log('Order Payload:', JSON.stringify(orderData, null, 2));
-  
       const responseData = await orderService.placeOrder(orderData);
       console.log('Order placed successfully:', responseData);
   
-      // ✅ Add these 3 important steps:
-      setOrderDetails(responseData.order);     // store placed order
-      setOrderSuccess(true);                   // mark order as success
-      setActiveStep(3);                        // move to Confirmation page
+      setOrderDetails(responseData.order);
+      setOrderSuccess(true);
+      setActiveStep(3);
   
     } catch (error) {
       console.error('Failed to place order:', error);
+      setSnackbarMessage('Failed to place order. Please try again.');
+      setSnackbarOpen(true);
     }
   };
-  
   
   const goToHome = () => {
     navigate('/restaurants');
@@ -530,43 +585,9 @@ const Cart = () => {
                         sx={{ boxShadow: 'none', '&:before': { display: 'none' } }}
                       >
                         <AccordionDetails>
-                          <Grid container spacing={2}>
-                            <Grid item xs={12}>
-                              <TextField
-                                required
-                                id="cc-number"
-                                label="Card Number"
-                                fullWidth
-                                placeholder="1234 5678 9012 3456"
-                              />
-                            </Grid>
-                            <Grid item xs={12} sm={6}>
-                              <TextField
-                                required
-                                id="cc-exp"
-                                label="Expiry Date"
-                                fullWidth
-                                placeholder="MM/YY"
-                              />
-                            </Grid>
-                            <Grid item xs={12} sm={6}>
-                              <TextField
-                                required
-                                id="cc-cvv"
-                                label="CVV"
-                                fullWidth
-                                placeholder="123"
-                              />
-                            </Grid>
-                            <Grid item xs={12}>
-                              <TextField
-                                required
-                                id="cc-name"
-                                label="Name on Card"
-                                fullWidth
-                              />
-                            </Grid>
-                          </Grid>
+                          <Alert severity="info">
+                            You will be redirected to Stripe's secure payment gateway to complete your payment.
+                          </Alert>
                         </AccordionDetails>
                       </Accordion>
 
@@ -647,7 +668,7 @@ const Cart = () => {
                     fullWidth 
                     sx={{ mt: 2 }}
                     onClick={handlePlaceOrder}
-                    disabled={paymentMethod === 'creditCard' || paymentMethod === 'onlinePayment'}
+                    disabled={false}
                   >
                     {paymentMethod === 'cashOnDelivery' ? 'Place Order' : 'Proceed to Payment'}
                   </Button>
@@ -710,9 +731,8 @@ const Cart = () => {
                           Restaurant
                         </Typography>
                         <Typography variant="body1">
-  {orderDetails?.restaurant?.name || '-'}
-</Typography>
-
+                          {orderDetails?.restaurant?.name || '-'}
+                        </Typography>
                       </Box>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                         <Typography variant="body2" color="text.secondary">
@@ -729,18 +749,16 @@ const Cart = () => {
                           Total Amount
                         </Typography>
                         <Typography variant="body1">
-  {orderDetails?.total !== undefined ? `$${orderDetails.total.toFixed(2)}` : '$0.00'}
-</Typography>
-
-
+                          {orderDetails?.total !== undefined ? `$${orderDetails.total.toFixed(2)}` : '$0.00'}
+                        </Typography>
                       </Box>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                         <Typography variant="body2" color="text.secondary">
                           Delivery Address
                         </Typography>
                         {orderDetails?.deliveryAddress
-  ? `${orderDetails.deliveryAddress.street}, ${orderDetails.deliveryAddress.city}, ${orderDetails.deliveryAddress.state} ${orderDetails.deliveryAddress.zipCode}`
-  : '-'}
+                          ? `${orderDetails.deliveryAddress.street}, ${orderDetails.deliveryAddress.city}, ${orderDetails.deliveryAddress.state} ${orderDetails.deliveryAddress.zipCode}`
+                          : '-'}
                       </Box>
                       <Divider sx={{ my: 2 }} />
                       <Typography variant="subtitle1" gutterBottom>

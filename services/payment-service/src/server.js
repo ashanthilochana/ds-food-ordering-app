@@ -18,15 +18,19 @@ app.use('/api/payments', paymentRoutes);
 app.use(errorHandler);
 
 // MongoDB connection
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://ashanthilochana98:fiwpot-gAxxis-manky5@cluster0.k6k9lnq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
+const MONGODB_URI = process.env.MONGODB_URI;
 mongoose.connect(MONGODB_URI)
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('MongoDB connection error:', err));
 
 // Start server
-const PORT = process.env.PORT || 3004;
+const PORT = process.env.PORT || 3008;
 app.listen(PORT, () => {
   console.log(`Payment Service running on port ${PORT}`);
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`Stripe publishable key: ${process.env.STRIPE_PUBLISHABLE_KEY?.substring(0, 10)}...`);
+    console.log(`Stripe secret key: ${process.env.STRIPE_SECRET_KEY?.substring(0, 10)}...`);
+  }
 });
 
 module.exports = app;

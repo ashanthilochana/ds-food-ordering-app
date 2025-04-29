@@ -52,3 +52,11 @@ exports.isRestaurantOwner = (req, res, next) => {
   }
   next();
 };
+
+// Middleware to check if user is an admin
+exports.isAdmin = (req, res, next) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ message: 'Access denied. Not an admin.' });
+  }
+  next();
+};

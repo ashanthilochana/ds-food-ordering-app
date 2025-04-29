@@ -1,22 +1,45 @@
 const { body } = require('express-validator');
 
 exports.createPaymentIntentValidation = [
-  body('orderId').isMongoId().withMessage('Valid order ID is required'),
+  body('orderId')
+    .isMongoId()
+    .withMessage('Invalid order ID'),
   body('paymentMethod')
-    .isIn(['card', 'cash_on_delivery'])
-    .withMessage('Payment method must be either card or cash_on_delivery'),
-  body('currency')
-    .optional()
-    .isIn(['usd'])
-    .withMessage('Currency must be USD')
+    .isIn(['card', 'cash_on_delivery', 'paypal', 'google_pay', 'apple_pay'])
+    .withMessage('Invalid payment method')
 ];
 
 exports.confirmPaymentValidation = [
-  body('paymentIntentId').notEmpty().withMessage('Payment intent ID is required'),
-  body('orderId').isMongoId().withMessage('Valid order ID is required')
+  body('paymentIntentId')
+    .isString()
+    .notEmpty()
+    .withMessage('Payment intent ID is required'),
+  body('orderId')
+    .isMongoId()
+    .withMessage('Invalid order ID')
 ];
 
 exports.refundPaymentValidation = [
-  body('paymentId').isMongoId().withMessage('Valid payment ID is required'),
-  body('reason').notEmpty().withMessage('Refund reason is required')
+  body('paymentId')
+    .isMongoId()
+    .withMessage('Invalid payment ID'),
+  body('reason')
+    .optional()
+    .isString()
+    .isLength({ min: 3, max: 500 })
+    .withMessage('Reason must be between 3 and 500 characters')
+];
+
+exports.partialRefundValidation = [
+  body('paymentId')
+    .isMongoId()
+    .withMessage('Invalid payment ID'),
+  body('amount')
+    .isFloat({ min: 0.01 })
+    .withMessage('Amount must be greater than 0'),
+  body('reason')
+    .optional()
+    .isString()
+    .isLength({ min: 3, max: 500 })
+    .withMessage('Reason must be between 3 and 500 characters')
 ];
