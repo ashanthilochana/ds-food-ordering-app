@@ -73,16 +73,12 @@ app.use(errorHandler);
 // MongoDB connection
 if (process.env.NODE_ENV !== 'test') {
   mongoose
-    .connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/restaurant-service', {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    })
+    .connect(process.env.MONGODB_URI )
     .then(() => {
       console.log('Connected to MongoDB');
       const PORT = process.env.PORT || 3001;
       app.listen(PORT, () => {
         console.log(`Restaurant service running on port ${PORT}`);
-        console.log(`API Documentation available at http://localhost:${PORT}/api-docs`);
       });
     })
     .catch((err) => {
