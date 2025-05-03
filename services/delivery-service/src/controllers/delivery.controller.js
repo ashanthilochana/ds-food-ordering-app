@@ -1,5 +1,6 @@
 const Delivery = require('../models/delivery.model');
 const { validationResult } = require('express-validator');
+const axios = require('axios'); 
 
 // Create a new delivery
 exports.createDelivery = async (req, res) => {
@@ -23,15 +24,42 @@ exports.createDelivery = async (req, res) => {
 };
 
 // Get all deliveries for a delivery person
+
+
 exports.getDeliveryPersonDeliveries = async (req, res) => {
   try {
-    const deliveries = await Delivery.find({ deliveryPersonId: req.user._id })
-      .sort({ createdAt: -1 });
-    res.json(deliveries);
+    const deliveries = await Delivery.find({ deliveryPersonId: req.user._id }).sort({ createdAt: -1 });
+
+    const enrichedDeliveries = await Promise.all(
+      deliveries.map(async (delivery) => {
+        try {
+          const orderRes = await axios.get(`http://localhost:3003/api/orders/${delivery.orderId}`, {
+            headers: {
+              Authorization: req.headers.authorization // forward token if order service is protected
+            }
+          });
+          return {
+            ...delivery.toObject(),
+            order: orderRes.data
+          };
+        } catch (err) {
+          console.error(`Failed to fetch order ${delivery.orderId}: ${err.message}`);
+          return {
+            ...delivery.toObject(),
+            order: null
+          };
+        }
+      })
+    );
+
+    res.json(enrichedDeliveries);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error fetching delivery person deliveries:', error.message);
+    res.status(500).json({ message: 'Failed to load deliveries' });
   }
 };
+
+
 
 // Update delivery status
 exports.updateDeliveryStatus = async (req, res) => {
