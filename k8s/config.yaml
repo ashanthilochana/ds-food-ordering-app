@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  mongodb-uri: "mongodb://mongodb:27017/food-ordering"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: app-secrets
+type: Opaque
+stringData:
+  jwt-secret: your_super_secret_jwt_key_123
+  jwt-refresh-secret: your_super_secret_refresh_key_123

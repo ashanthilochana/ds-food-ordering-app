@@ -40,6 +40,53 @@ exports.createOrder = async (req, res) => {
       
       // Add restaurant details to order
       req.body.restaurant.name = restaurantResponse.data.name;
+      
+      // Create the order
+      const order = new Order({
+        ...req.body,
+        customer: {
+          _id: req.user._id,
+          name: req.user.name,
+          email: req.user.email,
+          phone: req.user.phone
+        },
+        status: 'pending'
+      });
+
+      await order.save();
+
+      // Send notification to customer
+      try {
+        await axios.post(
+          `${NOTIFICATION_SERVICE_URL}/api/notifications`,
+          {
+            userId: req.user._id,
+            type: 'order_created',
+            title: 'Order Confirmation',
+            message: `<h1>Order Confirmation</h1>
+                     <p>Dear ${req.user.name},</p>
+                     <p>Your order has been successfully placed with ${order.restaurant.name}.</p>
+                     <p>Order Details:</p>
+                     <ul>
+                       ${order.items.map(item => `<li>${item.quantity}x ${item.name} - $${item.price.toFixed(2)}</li>`).join('')}
+                     </ul>
+                     <p>Total Amount: $${order.totalAmount.toFixed(2)}</p>
+                     <p>We'll notify you when the restaurant confirms your order.</p>
+                     <p>Thank you for choosing our service!</p>`,
+            data: {
+              orderId: order._id,
+              email: req.user.email
+            },
+            channels: ['email', 'in_app']
+          },
+          { headers: { Authorization: req.header('Authorization') } }
+        );
+      } catch (error) {
+        console.error('Failed to send notification:', error);
+        // Don't fail the order creation if notification fails
+      }
+
+      res.status(201).json(order);
     } catch (error) {
       console.error('Restaurant verification failed:', error.message);
       return res.status(404).json({ 

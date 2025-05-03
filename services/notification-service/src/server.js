@@ -6,6 +6,7 @@ const http = require('http');
 const socketIo = require('socket.io');
 const amqp = require('amqplib');
 const notificationRoutes = require('./routes/notification.routes');
+const testRoutes = require('./routes/test.routes');
 const { setupSocketIO } = require('./services/socket.service');
 const { setupMessageQueue } = require('./services/queue.service');
 const { errorHandler } = require('./middleware/error.middleware');
@@ -25,6 +26,7 @@ app.use(express.json());
 
 // Routes
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/test', testRoutes);
 
 // Error handling
 app.use(errorHandler);
