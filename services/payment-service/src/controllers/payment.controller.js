@@ -630,3 +630,18 @@ exports.createCheckoutSession = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// Get payment by Stripe session ID
+exports.getPaymentBySessionId = async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    // Find payment by sessionId (you need to store sessionId in your Payment model when creating the session)
+    const payment = await Payment.findOne({ sessionId });
+    if (!payment) {
+      return res.status(404).json({ message: 'Payment not found' });
+    }
+    res.json(payment);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

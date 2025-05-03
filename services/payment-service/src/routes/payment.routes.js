@@ -88,4 +88,10 @@ router.post(
   paymentController.createCheckoutSession
 );
 
+// Get payment by session ID
+router.get(
+  '/session/:sessionId',
+  paymentController.getPaymentBySessionId
+);
+
 module.exports = router;

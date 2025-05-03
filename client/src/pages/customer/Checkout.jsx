@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import PaymentForm from '../../components/PaymentForm';
+import PaymentForm from '../../components/common/PaymentForm';
 import orderService from '../../services/order.service';
 import { useAuth } from '../../context/AuthContext';
 
@@ -162,6 +162,7 @@ const Checkout = () => {
                   });
                 } catch (err) {
                   setError(err.message || 'Failed to confirm order');
+                  console.log(err);
                 } finally {
                   setLoading(false);
                 }

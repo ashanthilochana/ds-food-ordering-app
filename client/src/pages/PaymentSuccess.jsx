@@ -34,13 +34,25 @@ const PaymentSuccess = () => {
       setLoading(true);
       try {
         if (paymentId) {
-          // Already have paymentId from state
           const paymentData = await paymentService.getPaymentById(paymentId);
+          console.log(paymentData);
           setPayment(paymentData);
+          // Optionally set orderId, amount, etc. from paymentData if needed
         } else if (sessionId) {
-          // Remove or comment out this block if not needed
-          // const paymentData = await paymentService.getPaymentBySessionId(sessionId);
-          // setPayment(paymentData);
+          // Fetch payment by sessionId
+          const paymentData = await paymentService.getPaymentBySessionId(sessionId);
+          console.log(paymentData);
+          setPayment(paymentData);
+          // Set orderId, paymentId, amount from paymentData
+          setOrder({
+            ...order,
+            // update these fields as per your paymentData structure
+            total: paymentData.amount,
+            // etc.
+          });
+          // If paymentData contains orderId/paymentId, set them in state
+          // setOrderId(paymentData.orderId);
+          // setPaymentId(paymentData.paymentId);
         } else {
           setError('No payment information found.');
         }
