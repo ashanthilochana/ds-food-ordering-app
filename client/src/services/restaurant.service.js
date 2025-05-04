@@ -90,14 +90,11 @@ const restaurantService = {
     return response.data;
   },
 
-  getRestaurantMenuItems: async (restaurantId) => {
-    const response = await api.get(`/menu-items/restaurant/${restaurantId}`);
+  deleteRestaurant: async (id) => {
+    const response = await api.delete(`/restaurants/${id}`);
     return response.data;
   },
 
-
 };
-
-
 
 export default restaurantService;

@@ -10,11 +10,18 @@ import {
   Button,
   CircularProgress,
   Rating,
-  Alert
+  Alert,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  DialogContentText
 } from '@mui/material';
 import {
   Add as AddIcon,
-  Restaurant as RestaurantIcon
+  Restaurant as RestaurantIcon,
+  Delete as DeleteIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../../components/layout/Layout';
@@ -24,13 +31,14 @@ const RestaurantDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [restaurants, setRestaurants] = useState([]);
   const [error, setError] = useState('');
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [restaurantToDelete, setRestaurantToDelete] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchRestaurants = async () => {
       try {
         setLoading(true);
-        // 🔵 Correct function call
         const data = await restaurantService.getMyRestaurants();
         setRestaurants(data);
         setError('');
@@ -44,6 +52,28 @@ const RestaurantDashboard = () => {
 
     fetchRestaurants();
   }, []);
+
+  const handleDeleteClick = (restaurant) => {
+    setRestaurantToDelete(restaurant);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    try {
+      await restaurantService.deleteRestaurant(restaurantToDelete._id);
+      setRestaurants(restaurants.filter(r => r._id !== restaurantToDelete._id));
+      setDeleteDialogOpen(false);
+      setRestaurantToDelete(null);
+    } catch (err) {
+      setError('Failed to delete restaurant. Please try again.');
+      console.error('Error deleting restaurant:', err);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false);
+    setRestaurantToDelete(null);
+  };
 
   if (loading) {
     return (
@@ -118,6 +148,17 @@ const RestaurantDashboard = () => {
                           {restaurant.rating || 'No ratings yet'}
                         </Typography>
                       </Box>
+                      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteClick(restaurant);
+                          }}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </Box>
                     </CardContent>
                   </Card>
                 </Grid>
@@ -125,6 +166,25 @@ const RestaurantDashboard = () => {
             </Grid>
           )}
         </Paper>
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog
+          open={deleteDialogOpen}
+          onClose={handleDeleteCancel}
+        >
+          <DialogTitle>Delete Restaurant</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              Are you sure you want to delete "{restaurantToDelete?.name}"? This action cannot be undone.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleDeleteCancel}>Cancel</Button>
+            <Button onClick={handleDeleteConfirm} color="error" autoFocus>
+              Delete
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Container>
     </Layout>
   );
