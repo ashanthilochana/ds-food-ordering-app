@@ -62,9 +62,6 @@ const AddRestaurant = () => {
       phone: ''
     },
     openingHours: '',
-    deliveryTime: '',
-    deliveryFee: '',
-    minOrder: '',
     tags: []
   });
   const [error, setError] = useState('');
@@ -373,36 +370,8 @@ const AddRestaurant = () => {
                   placeholder="e.g., 9:00 AM - 10:00 PM"
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Delivery Time"
-                  name="deliveryTime"
-                  value={formData.deliveryTime}
-                  onChange={handleChange}
-                  placeholder="e.g., 30-45 min"
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Delivery Fee"
-                  name="deliveryFee"
-                  value={formData.deliveryFee}
-                  onChange={handleChange}
-                  placeholder="e.g., $2.99"
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Minimum Order"
-                  name="minOrder"
-                  value={formData.minOrder}
-                  onChange={handleChange}
-                  placeholder="e.g., $10"
-                />
-              </Grid>
+              
+              
               <Grid item xs={12}>
                 <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
                   <Button

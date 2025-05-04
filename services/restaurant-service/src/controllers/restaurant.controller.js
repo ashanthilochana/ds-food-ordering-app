@@ -1,7 +1,7 @@
 const Restaurant = require('../models/restaurant.model');
 const { validationResult } = require('express-validator');
 
-// Create a new restaurant
+// Create new restaurant
 exports.createRestaurant = async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -11,10 +11,10 @@ exports.createRestaurant = async (req, res) => {
 
     const restaurantData = {
       ...req.body,
-      owner: req.user._id, // Using _id from Auth Service user object
+      owner: req.user._id, 
       contactInfo: {
         ...req.body.contactInfo,
-        email: req.user.email // Use the authenticated user's email
+        email: req.user.email 
       }
     };
 
@@ -73,7 +73,7 @@ exports.updateRestaurant = async (req, res) => {
       return res.status(404).json({ message: 'Restaurant not found' });
     }
 
-    // Check if user is the owner
+    
     if (restaurant.owner.toString() !== req.user._id) {
       return res.status(403).json({ message: 'Not authorized' });
     }

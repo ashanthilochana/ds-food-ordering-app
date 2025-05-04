@@ -1,3 +1,4 @@
+// DeliveryDashboard.jsx
 import React, { useState, useEffect } from 'react';
 import {
   Container, Box, Typography, Paper, Grid, Button, Tabs, Tab,
@@ -5,7 +6,7 @@ import {
 } from '@mui/material';
 import {
   DirectionsBike as BikeIcon, Refresh as RefreshIcon, DoneAll as DoneAllIcon,
-  Cancel as CancelIcon
+  Cancel as CancelIcon, LocalShipping as LocalShippingIcon
 } from '@mui/icons-material';
 import Layout from '../../components/layout/Layout';
 import deliveryService from '../../services/delivery.service';
@@ -16,7 +17,6 @@ const DeliveryDashboard = () => {
   const [tabValue, setTabValue] = useState(0);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [refreshing, setRefreshing] = useState(false);
-
   const fetchDeliveries = async () => {
     setLoading(true);
     try {
@@ -33,12 +33,32 @@ const DeliveryDashboard = () => {
     setLoading(false);
   };
 
+
   useEffect(() => {
     fetchDeliveries();
   }, []);
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
+  };
+
+  const handleStatusUpdate = async (deliveryId, newStatus) => {
+    try {
+      await deliveryService.updateDeliveryStatus(deliveryId, newStatus);
+      setSnackbar({
+        open: true,
+        message: `Status updated to ${getStatusText(newStatus)}`,
+        severity: 'success'
+      });
+      fetchDeliveries(); // Refresh the list
+    } catch (error) {
+      console.error('Status update error:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to update delivery status',
+        severity: 'error'
+      });
+    }
   };
 
   const handleRefresh = () => {
@@ -57,6 +77,7 @@ const DeliveryDashboard = () => {
     switch (status) {
       case 'pending': return 'Pending Pickup';
       case 'picked_up': return 'Out for Delivery';
+      case 'in_transit': return 'In Transit';
       case 'delivered': return 'Delivered';
       case 'cancelled': return 'Cancelled';
       default: return status;
@@ -67,6 +88,7 @@ const DeliveryDashboard = () => {
     switch (status) {
       case 'pending': return 'warning';
       case 'picked_up': return 'info';
+      case 'in_transit': return 'info';
       case 'delivered': return 'success';
       case 'cancelled': return 'error';
       default: return 'default';
@@ -77,7 +99,7 @@ const DeliveryDashboard = () => {
     switch (tabValue) {
       case 0: return deliveries;
       case 1: return deliveries.filter(delivery => delivery.status === 'pending');
-      case 2: return deliveries.filter(delivery => delivery.status === 'picked_up');
+      case 2: return deliveries.filter(delivery => delivery.status === 'picked_up' || delivery.status === 'in_transit');
       case 3: return deliveries.filter(delivery => delivery.status === 'delivered');
       case 4: return deliveries.filter(delivery => delivery.status === 'cancelled');
       default: return deliveries;
@@ -96,25 +118,6 @@ const DeliveryDashboard = () => {
     const diffHours = Math.floor(diffMins / 60);
     if (diffHours === 1) return '1 hour ago';
     return `${diffHours} hours ago`;
-  };
-
-  const handleStatusUpdate = async (id, newStatus) => {
-    try {
-      await deliveryService.updateDeliveryStatus(id, newStatus);
-      fetchDeliveries();
-      setSnackbar({
-        open: true,
-        message: `Order marked as ${newStatus.replace('_', ' ')}`,
-        severity: 'success'
-      });
-    } catch (error) {
-      console.error('Update error:', error);
-      setSnackbar({
-        open: true,
-        message: 'Failed to update status',
-        severity: 'error'
-      });
-    }
   };
 
   if (loading) {
@@ -140,10 +143,10 @@ const DeliveryDashboard = () => {
 
           <Paper sx={{ mb: 3 }}>
             <Tabs value={tabValue} onChange={handleTabChange} variant="scrollable" scrollButtons="auto">
-              <Tab label="All Deliveries" />
-              <Tab label={<Badge badgeContent={deliveries.filter(d => d.status === 'pending').length} color="warning">Pending Pickup</Badge>} />
-              <Tab label={<Badge badgeContent={deliveries.filter(d => d.status === 'picked_up').length} color="info">Out for Delivery</Badge>} />
-              <Tab label="Completed" />
+              <Tab label="All" />
+              <Tab label={<Badge badgeContent={deliveries.filter(d => d.status === 'pending').length} color="warning">Pending</Badge>} />
+              <Tab label={<Badge badgeContent={deliveries.filter(d => d.status === 'picked_up').length} color="info">Out</Badge>} />
+              <Tab label="Delivered" />
               <Tab label="Cancelled" />
             </Tabs>
           </Paper>
@@ -153,8 +156,8 @@ const DeliveryDashboard = () => {
               <Grid item xs={12} md={6} lg={4} key={delivery._id}>
                 <Card>
                   <CardContent>
-                    <Box display="flex" justifyContent="space-between" alignItems="center">
-                      <Typography variant="h6">Order #{delivery._id.slice(-5).toUpperCase()}</Typography>
+                    <Box display="flex" justifyContent="space-between">
+                      <Typography variant="h6">Order #{delivery._id.slice(-5)}</Typography>
                       <Chip label={getStatusText(delivery.status)} color={getStatusColor(delivery.status)} size="small" />
                     </Box>
                     <Typography variant="body2" color="text.secondary">
@@ -163,43 +166,44 @@ const DeliveryDashboard = () => {
                     <Divider sx={{ my: 1 }} />
                     <Typography variant="body2"><strong>From:</strong> {delivery.restaurant?.name}</Typography>
                     <Typography variant="body2"><strong>To:</strong> {delivery.customer?.name}</Typography>
-
-                    {/* ACTION BUTTONS */}
-                    {delivery.status === 'pending' && (
-                      <Button
-                        fullWidth
-                        variant="contained"
-                        color="warning"
-                        startIcon={<BikeIcon />}
-                        sx={{ mt: 2 }}
-                        onClick={() => handleStatusUpdate(delivery._id, 'picked_up')}
-                      >
-                        Confirm Pickup
-                      </Button>
-                    )}
-
-                    {delivery.status === 'picked_up' && (
-                      <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
+                    <Typography variant="body2"><strong>Total:</strong> Rs.{delivery.totalAmount}</Typography>
+                    
+                    {/* Action Buttons */}
+                    <Box mt={2} display="flex" gap={1}>
+                      {(delivery.status === 'pending' || delivery.status === 'assigned') && (
                         <Button
-                          fullWidth
-                          variant="outlined"
-                          color="error"
-                          startIcon={<CancelIcon />}
-                          onClick={() => handleStatusUpdate(delivery._id, 'cancelled')}
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          fullWidth
                           variant="contained"
-                          color="success"
-                          startIcon={<DoneAllIcon />}
-                          onClick={() => handleStatusUpdate(delivery._id, 'delivered')}
+                          color="primary"
+                          startIcon={<LocalShippingIcon />}
+                          onClick={() => handleStatusUpdate(delivery._id, 'picked_up')}
+                          fullWidth
                         >
-                          Delivered
+                          Confirm Pickup
                         </Button>
-                      </Box>
-                    )}
+                      )}
+                      {(delivery.status === 'picked_up' || delivery.status === 'in_transit') && (
+                        <>
+                          <Button
+                            variant="contained"
+                            color="success"
+                            startIcon={<DoneAllIcon />}
+                            onClick={() => handleStatusUpdate(delivery._id, 'delivered')}
+                            fullWidth
+                          >
+                            Mark as Delivered
+                          </Button>
+                          <Button
+                            variant="outlined"
+                            color="error"
+                            startIcon={<CancelIcon />}
+                            onClick={() => handleStatusUpdate(delivery._id, 'cancelled')}
+                            fullWidth
+                          >
+                            Cancel Delivery
+                          </Button>
+                        </>
+                      )}
+                    </Box>
                   </CardContent>
                 </Card>
               </Grid>

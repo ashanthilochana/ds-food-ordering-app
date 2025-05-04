@@ -215,13 +215,7 @@ const MenuManagement = () => {
             value={currentItem?.description || ''}
             onChange={(e) => setCurrentItem({ ...currentItem, description: e.target.value })}
           />
-          <TextField
-            margin="dense"
-            label="Image URL"
-            fullWidth
-            value={currentItem?.image || ''}
-            onChange={(e) => setCurrentItem({ ...currentItem, image: e.target.value })}
-          />
+          
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenItemDialog(false)}>Cancel</Button>
