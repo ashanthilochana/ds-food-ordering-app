@@ -1,8 +1,3 @@
-# Test results and reports
-test-results/
-reports/
-coverage/
-
 # Node modules and logs
 node_modules/
 npm-debug.log*

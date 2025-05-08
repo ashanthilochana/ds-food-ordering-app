@@ -1,0 +1,59 @@
+[2025-05-08T16:47:33.752Z] Starting test: should successfully register a new user
+[2025-05-08T16:47:38.789Z] Browser session started
+[2025-05-08T16:47:41.675Z] Warning: No test directory set. Using default directory.
+[2025-05-08T16:47:41.867Z] Screenshot saved: unknown-test/register-form-initial-1746722861675.png
+[2025-05-08T16:47:42.686Z] Screenshot saved: unknown-test/register-form-filled-1746722862492.png
+[2025-05-08T16:47:44.030Z] Screenshot saved: unknown-test/register-success-redirect-1746722863825.png
+[2025-05-08T16:47:44.033Z] Test completed: should successfully register a new user (passed)
+
+[2025-05-08T16:47:44.090Z] Starting test: should successfully login as customer
+[2025-05-08T16:47:44.883Z] Browser session started
+[2025-05-08T16:47:48.125Z] Screenshot saved: unknown-test/login-form-initial-1746722867710.png
+[2025-05-08T16:47:48.823Z] Screenshot saved: unknown-test/login-form-filled-1746722868379.png
+[2025-05-08T16:47:49.762Z] Screenshot saved: unknown-test/login-success-redirect-1746722869537.png
+[2025-05-08T16:47:49.764Z] Test completed: should successfully login as customer (passed)
+[2025-05-08T16:47:49.820Z] Starting test: should add item to cart
+[2025-05-08T16:47:50.561Z] Browser session started
+[2025-05-08T16:47:54.681Z] Screenshot saved: unknown-test/cart-test-login-1746722874405.png
+[2025-05-08T16:47:54.861Z] Screenshot saved: unknown-test/restaurants-page-initial-1746722874686.png
+[2025-05-08T16:47:55.039Z] Screenshot saved: unknown-test/restaurants-loaded-1746722874867.png
+[2025-05-08T16:47:55.491Z] Screenshot saved: unknown-test/menu-items-loaded-1746722875314.png
+[2025-05-08T16:47:56.175Z] Screenshot saved: unknown-test/menu-item-dialog-1746722875548.png
+[2025-05-08T16:47:56.838Z] Screenshot saved: unknown-test/item-added-to-cart-1746722876235.png
+[2025-05-08T16:47:58.116Z] Screenshot saved: unknown-test/cart-items-loaded-1746722877930.png
+[2025-05-08T16:47:58.297Z] Screenshot saved: unknown-test/cart-verification-1746722878119.png
+[2025-05-08T16:47:58.297Z] Test completed: should add item to cart (passed)
+[2025-05-08T16:47:58.352Z] Starting test: should have all main navigation elements visible
+[2025-05-08T16:47:59.133Z] Browser session started
+[2025-05-08T16:48:03.180Z] Screenshot saved: unknown-test/navigation-test-login-1746722882981.png
+[2025-05-08T16:48:03.373Z] Screenshot saved: unknown-test/navigation-menu-visible-1746722883191.png
+[2025-05-08T16:48:03.556Z] Screenshot saved: unknown-test/profile-menu-visible-1746722883383.png
+[2025-05-08T16:48:03.556Z] Test completed: should have all main navigation elements visible (passed)
+[2025-05-08T16:48:03.610Z] Starting test: should successfully navigate to cart page
+[2025-05-08T16:48:04.301Z] Browser session started
+[2025-05-08T16:48:08.463Z] Screenshot saved: unknown-test/navigation-test-login-1746722888222.png
+[2025-05-08T16:48:08.644Z] Screenshot saved: unknown-test/before-cart-navigation-1746722888468.png
+[2025-05-08T16:48:08.888Z] Screenshot saved: unknown-test/cart-page-loaded-1746722888699.png
+[2025-05-08T16:48:09.067Z] Screenshot saved: unknown-test/cart-page-verified-1746722888909.png
+[2025-05-08T16:48:09.067Z] Test completed: should successfully navigate to cart page (passed)
+[2025-05-08T16:48:09.122Z] Initializing test run...
+[2025-05-08T16:48:09.124Z] Deleted old test directory: 1746717776914_should-display-restaurant-list
+[2025-05-08T16:48:09.127Z] Deleted old test directory: 1746717744744_unknown-test
+[2025-05-08T16:48:09.129Z] Deleted old test directory: 1746717113588_should-filter-restaurants-by-search
+[2025-05-08T16:48:09.130Z] Deleted old test directory: 1746717113588_should-show-restaurant-details
+[2025-05-08T16:48:09.130Z] Cleaned up old screenshots
+[2025-05-08T16:48:09.131Z] Starting test: should display restaurant list
+[2025-05-08T16:48:09.900Z] Browser session started
+[2025-05-08T16:48:16.825Z] Screenshot saved: should-display-restaurant-list/restaurant-test-login-1746722896640.png
+[2025-05-08T16:48:18.301Z] Screenshot saved: should-display-restaurant-list/restaurants-loaded-1746722897835.png
+[2025-05-08T16:48:27.919Z] Test completed: should display restaurant list (passed)
+[2025-05-08T16:48:29.972Z] Starting test: should show restaurant details
+[2025-05-08T16:48:30.706Z] Browser session started
+[2025-05-08T16:48:37.416Z] Screenshot saved: should-show-restaurant-details/restaurant-test-login-1746722917180.png
+[2025-05-08T16:48:40.717Z] Screenshot saved: should-show-restaurant-details/restaurant-details-1746722920524.png
+[2025-05-08T16:48:42.740Z] Test completed: should show restaurant details (passed)
+[2025-05-08T16:48:44.793Z] Starting test: should filter restaurants by search
+[2025-05-08T16:48:45.583Z] Browser session started
+[2025-05-08T16:48:52.572Z] Screenshot saved: should-filter-restaurants-by-search/restaurant-test-login-1746722932342.png
+[2025-05-08T16:48:57.196Z] Screenshot saved: should-filter-restaurants-by-search/restaurant-search-results-1746722936747.png
+[2025-05-08T16:48:57.201Z] Test completed: should filter restaurants by search (passed)
