@@ -1,0 +1,34 @@
+# Test results and reports
+test-results/
+screenshots/
+reports/
+coverage/
+
+# Node modules and logs
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Test environment files
+.env.test
+.env.test.local
+
+# Browser driver logs
+chromedriver.log
+geckodriver.log
+
+# Test cache
+.nyc_output/
+.mocha-cache/
+
+# IDE and OS specific files
+.DS_Store
+.idea/
+*.swp
+*.swo
+
+# Temporary test files
+*.tmp
+*.temp
+temp/

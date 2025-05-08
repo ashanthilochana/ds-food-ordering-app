@@ -1,0 +1,57 @@
+import fs from 'fs';
+import path from 'path';
+
+const LOG_FILE = path.join(process.cwd(), 'test-results', 'test-execution.log');
+const SCREENSHOT_DIR = path.join(process.cwd(), 'test-results', 'screenshots');
+
+// Ensure directories exist
+if (!fs.existsSync(path.dirname(LOG_FILE))) {
+    fs.mkdirSync(path.dirname(LOG_FILE), { recursive: true });
+}
+if (!fs.existsSync(SCREENSHOT_DIR)) {
+    fs.mkdirSync(SCREENSHOT_DIR, { recursive: true });
+}
+
+// Keep last N test runs
+const RUNS_TO_KEEP = 3;
+
+class Logger {
+    constructor() {
+        this.logDir = path.join(process.cwd(), 'test-results');
+        this.screenshotsDir = path.join(this.logDir, 'screenshots');
+        this.logFile = path.join(this.logDir, 'test-execution.log');
+        this.setupDirectories();
+    }
+
+    setupDirectories() {
+        if (!fs.existsSync(this.logDir)) {
+            fs.mkdirSync(this.logDir);
+        }
+        if (!fs.existsSync(this.screenshotsDir)) {
+            fs.mkdirSync(this.screenshotsDir);
+        }
+    }
+
+    async takeScreenshot(driver, testName) {
+        try {
+            const screenshot = await driver.takeScreenshot();
+            const filename = `${testName}-${Date.now()}.png`;
+            const filepath = path.join(this.screenshotsDir, filename);
+            fs.writeFileSync(filepath, screenshot, 'base64');
+            this.log(`Screenshot saved: ${filename}`);
+            return filename;
+        } catch (error) {
+            this.log(`Failed to take screenshot: ${error.message}`);
+            return null;
+        }
+    }
+
+    log(message) {
+        const timestamp = new Date().toISOString();
+        const logMessage = `[${timestamp}] ${message}\n`;
+        fs.appendFileSync(this.logFile, logMessage);
+        console.log(message);
+    }
+}
+
+export const logger = new Logger();

@@ -1,0 +1,78 @@
+import fs from 'fs';
+import path from 'path';
+
+const LOG_FILE = path.join(process.cwd(), 'test-results', 'test-execution.log');
+const SCREENSHOT_DIR = path.join(process.cwd(), 'test-results', 'screenshots');
+
+// Ensure directories exist
+if (!fs.existsSync(path.dirname(LOG_FILE))) {
+    fs.mkdirSync(path.dirname(LOG_FILE), { recursive: true });
+}
+if (!fs.existsSync(SCREENSHOT_DIR)) {
+    fs.mkdirSync(SCREENSHOT_DIR, { recursive: true });
+}
+
+// Keep last N test runs
+const RUNS_TO_KEEP = 3;
+
+class Logger {
+    cleanupOldScreenshots() {
+        if (!fs.existsSync(SCREENSHOT_DIR)) return;
+
+        // Get all screenshots and sort by date (newest first)
+        const files = fs.readdirSync(SCREENSHOT_DIR)
+            .filter(file => file.endsWith('.png'))
+            .map(file => ({
+                name: file,
+                path: path.join(SCREENSHOT_DIR, file),
+                time: fs.statSync(path.join(SCREENSHOT_DIR, file)).mtime.getTime()
+            }))
+            .sort((a, b) => b.time - a.time);
+
+        // Group files by test run (based on timestamp in filename)
+        const runs = new Map();
+        files.forEach(file => {
+            const match = file.name.match(/-(\d+)\.png$/);
+            if (match) {
+                const timestamp = match[1];
+                if (!runs.has(timestamp)) {
+                    runs.set(timestamp, []);
+                }
+                runs.get(timestamp).push(file);
+            }
+        });
+
+        // Keep only the most recent N runs
+        const timestamps = Array.from(runs.keys()).sort((a, b) => b - a);
+        timestamps.slice(RUNS_TO_KEEP).forEach(timestamp => {
+            runs.get(timestamp).forEach(file => {
+                fs.unlinkSync(file.path);
+                this.log(`Deleted old screenshot: ${file.name}`);
+            });
+        });
+    }
+
+    log(message) {
+        const timestamp = new Date().toISOString();
+        const logMessage = `[${timestamp}] ${message}\n`;
+        fs.appendFileSync(LOG_FILE, logMessage);
+    }
+
+    async takeScreenshot(driver, name) {
+        const timestamp = Date.now();
+        const filename = `${name}-${timestamp}.png`;
+        const filepath = path.join(SCREENSHOT_DIR, filename);
+        
+        const image = await driver.takeScreenshot();
+        fs.writeFileSync(filepath, image, 'base64');
+        this.log(`Screenshot saved: ${filename}`);
+    }
+
+    init() {
+        this.log('Initializing test run...');
+        this.cleanupOldScreenshots();
+        this.log('Cleaned up old screenshots');
+    }
+}
+
+export const logger = new Logger();

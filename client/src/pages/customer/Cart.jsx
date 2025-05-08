@@ -80,6 +80,7 @@ const Cart = () => {
   const [paymentMethod, setPaymentMethod] = useState('creditCard');
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [orderDetails, setOrderDetails] = useState(null);
   const [deliveryAddress, setDeliveryAddress] = useState({
     street: '',
@@ -205,6 +206,7 @@ const Cart = () => {
   };
 
   const handlePlaceOrder = async () => {
+    setIsProcessing(true);
     try {
       const user = JSON.parse(localStorage.getItem('user'));
       console.log('User from localStorage:', user);
@@ -227,6 +229,7 @@ const Cart = () => {
             price: item.price,
           },
           quantity: item.quantity,
+          total: item.price * item.quantity
         })),
         paymentMethod: paymentMethod === 'cashOnDelivery' ? 'cash_on_delivery' : 'card',
         deliveryAddress: {
@@ -236,18 +239,19 @@ const Cart = () => {
           zipCode: deliveryAddress.zip,
         },
         deliveryInstructions: deliveryAddress.instructions || '',
-        total: calculateTotal(),
+        totalAmount: calculateTotal(),
+        status: 'pending'
       };
 
       console.log('Order data for checkout:', orderData);
 
       if (paymentMethod === 'creditCard') {
         try {
-          console.log('Calling createCheckoutSession...');
+          // Create Stripe session first
           const session = await paymentService.createCheckoutSession(
             orderData.items,
             `${window.location.origin}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-            `${window.location.origin}/cart`
+            orderData.totalAmount
           );
           console.log('Stripe session response:', session);
           const stripe = await stripePromise;
@@ -266,14 +270,29 @@ const Cart = () => {
       }
   
       // For non-credit card payments (cash on delivery)
-      console.log('Order Payload:', JSON.stringify(orderData, null, 2));
-      const responseData = await orderService.placeOrder(orderData);
-      console.log('Order placed successfully:', responseData);
-  
-      setOrderDetails(responseData.order);
-      setOrderSuccess(true);
-      setActiveStep(3);
-  
+      try {
+        console.log('Order Payload:', JSON.stringify(orderData, null, 2));
+        const responseData = await orderService.placeOrder(orderData);
+        console.log('Order placed successfully:', responseData);
+
+        setIsProcessing(false);
+        setOrderDetails(responseData.order);
+        setOrderSuccess(true);
+        setActiveStep(3);
+
+        // Show success message
+        setSnackbarMessage('Order placed successfully!');
+        setSnackbarOpen(true);
+
+        // Clear cart after successful order
+        setCartItems([]);
+        Cookies.remove(CART_COOKIE_NAME);
+      } catch (error) {
+        console.error('Failed to place order:', error);
+        setIsProcessing(false);
+        setSnackbarMessage('Failed to place order. Please try again.');
+        setSnackbarOpen(true);
+      }
     } catch (error) {
       console.error('Failed to place order:', error);
       setSnackbarMessage('Failed to place order. Please try again.');
@@ -363,13 +382,13 @@ const Cart = () => {
                             <ListItemText
                               primary={item.name}
                               secondary={
-                                <Box component="span">
-                                  ${item.price.toFixed(2)}
-                                  {Object.entries(item.options).map(([key, value]) => (
-                                    <Typography key={key} variant="body2" color="text.secondary" component="span">
-                                      {` • ${key}: ${value}`}
-                                    </Typography>
-                                  ))}
+                                <Box component="div">
+                                  <Typography component="span" variant="body2">
+                                    ${item.price.toFixed(2)}
+                                    {Object.entries(item.options).map(([key, value]) => (
+                                      <span key={key}>{` • ${key}: ${value}`}</span>
+                                    ))}
+                                  </Typography>
                                 </Box>
                               }
                               sx={{ flex: '1 1 auto' }}
@@ -692,12 +711,12 @@ const Cart = () => {
                 <Box sx={{ textAlign: 'center', my: 4, maxWidth: 600, mx: 'auto' }}>
                   <Box 
                     sx={{ 
-                      bgcolor: 'success.main', 
-                      color: 'white', 
+                      bgcolor: 'success.light',
+                      color: 'success.contrastText',
                       height: 80, 
                       width: 80, 
                       borderRadius: '50%', 
-                      display: 'flex', 
+                      display: 'flex',
                       alignItems: 'center', 
                       justifyContent: 'center',
                       mx: 'auto',
@@ -805,7 +824,7 @@ const Cart = () => {
                                       'Online Payment'}
                       </Typography>
                       <Typography variant="body1" gutterBottom>
-                        Total Amount: ${calculateTotal().toFixed(2)}
+                        Total: ${calculateTotal().toFixed(2)}
                       </Typography>
                       <Typography variant="body1" gutterBottom>
                         Delivery Address: {deliveryAddress.street}, {deliveryAddress.city}, {deliveryAddress.state} {deliveryAddress.zip}
